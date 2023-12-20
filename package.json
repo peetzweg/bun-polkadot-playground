@@ -1,0 +1,23 @@
+{
+  "name": "bun-pjs-playground",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "typegen": "bun generate:defs && bun generate:meta",
+    "generate:defs": "node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/.bin/polkadot-types-from-defs --package  @generated/interfaces --input ./generated/interfaces --endpoint ./metadata.json",
+    "generate:meta": "node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/.bin/polkadot-types-from-chain --package @generated/interfaces --endpoint ./metadata.json --output ./generated/interfaces",
+    "metadata": "curl -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' https://$PLAYGROUND_RPC > metadata.json"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@polkadot/api": "^10.11.2",
+    "@polkadot/api-augment": "^10.11.2",
+    "@polkadot/keyring": "^12.6.2",
+    "ts-node": "^10.9.2"
+  }
+}
