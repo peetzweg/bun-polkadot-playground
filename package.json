@@ -3,21 +3,26 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "typegen": "bun generate:defs && bun generate:meta",
-    "generate:defs": "node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/.bin/polkadot-types-from-defs --package  @generated/interfaces --input ./generated/interfaces --endpoint ./metadata.json",
-    "generate:meta": "node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/.bin/polkadot-types-from-chain --package @generated/interfaces --endpoint ./metadata.json --output ./generated/interfaces",
-    "metadata": "curl -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' https://$PLAYGROUND_RPC > metadata.json"
+    "metadata:relay": "./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
+    "metadata:people": "./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
+    "metadata:bulletin": "./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC"
   },
   "devDependencies": {
     "bun-types": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@polkadot/api": "^10.11.2",
+    "@helia/strings": "^2.0.1",
+    "@multiformats/blake2": "^2.0.2",
     "@polkadot/api-augment": "^10.11.2",
+    "@polkadot/api": "^10.11.2",
     "@polkadot/keyring": "^12.6.2",
+    "@polkadot/util-crypto": "^12.6.2",
+    "cids": "^1.1.9",
+    "helia": "^3.0.1",
+    "multihashes": "^4.0.3",
     "ts-node": "^10.9.2"
   }
 }
