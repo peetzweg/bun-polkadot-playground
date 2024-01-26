@@ -16,8 +16,9 @@
   "dependencies": {
     "@helia/strings": "^2.0.1",
     "@multiformats/blake2": "^2.0.2",
-    "@polkadot/api-augment": "^10.11.2",
     "@polkadot/api": "^10.11.2",
+    "@polkadot/api-augment": "^10.11.2",
+    "@polkadot/api-contract": "^10.11.2",
     "@polkadot/keyring": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
     "cids": "^1.1.9",

@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { u8aToHex } from "@polkadot/util";
 
 const wsProvider = new WsProvider(`wss://rpc.polkadot.io`);
-import { u8aToHex } from "@polkadot/util";
 
 const api = await ApiPromise.create({
   provider: wsProvider,

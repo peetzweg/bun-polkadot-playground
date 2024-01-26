@@ -5,7 +5,8 @@ import "./src/interfaces/relay/augment-types";
 
 let encodedCall = argv[2];
 if (!encodedCall) throw "No Encoded Call Passed";
-const RPC = Bun.env.PLAYGROUND_RPC;
+const RPC = Bun.env.RELAY_RPC;
+
 console.log("RPC: ", RPC);
 
 const wsProvider = new WsProvider(`wss://${RPC}`);
