@@ -1,5 +1,5 @@
-import { argv } from "bun";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { argv } from "bun";
 import "./src/interfaces/relay/augment-api";
 import "./src/interfaces/relay/augment-types";
 
@@ -42,5 +42,37 @@ const ss58Address = api.createType("AccountId", keypair.address);
 console.log(keypair.address);
 console.log(ss58Address.toString());
 
-const result = await sudo.signAndSend(keyring.createFromUri("//Alice"));
-console.log(result.toHex());
+const unsubscribe = await sudo.signAndSend(
+  keyring.createFromUri("//Alice"),
+  ({ status, events }) => {
+    switch (status.type) {
+      case "Finalized":
+      case "InBlock": {
+        events.forEach((record) => {
+          if (api.events.sudo.Sudid.is(record.event)) {
+            // NEW PART:
+            if (record.event.data.sudoResult.isErr) {
+              // SAME PART AS IN DOCS:
+              let error = record.event.data.sudoResult.asErr;
+              if (error.isModule) {
+                // for module errors, we have the section indexed, lookup
+                const decoded = api.registry.findMetaError(error.asModule);
+                const { docs, name, section } = decoded;
+
+                console.log(`${section}.${name}: ${docs.join(" ")}`);
+              } else {
+                // Other, CannotLookup, BadOrigin, no extra info
+                console.log(error.toString());
+              }
+            }
+            return record.event;
+          }
+        });
+        unsubscribe();
+        process.exit(0);
+      }
+      default:
+        break;
+    }
+  }
+);

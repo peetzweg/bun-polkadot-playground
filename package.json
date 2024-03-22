@@ -5,7 +5,8 @@
   "scripts": {
     "metadata:relay": "./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
     "metadata:people": "./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
-    "metadata:bulletin": "./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC"
+    "metadata:bulletin": "./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC",
+    "build": "bun build ./cid.ts --compile --outfile ./dist/cid"
   },
   "devDependencies": {
     "bun-types": "latest"
@@ -16,10 +17,11 @@
   "dependencies": {
     "@helia/strings": "^2.0.1",
     "@multiformats/blake2": "^2.0.2",
-    "@polkadot/api": "^10.11.2",
-    "@polkadot/api-augment": "^10.11.2",
-    "@polkadot/api-contract": "^10.11.2",
+    "@polkadot/api": "^10.12.1",
+    "@polkadot/api-augment": "^10.12.1",
+    "@polkadot/api-contract": "^10.12.1",
     "@polkadot/keyring": "^12.6.2",
+    "@polkadot/types": "^10.12.1",
     "@polkadot/util-crypto": "^12.6.2",
     "cids": "^1.1.9",
     "helia": "^3.0.1",

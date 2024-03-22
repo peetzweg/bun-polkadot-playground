@@ -1,9 +1,9 @@
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import { argv } from "bun";
-import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 
 let name = argv[2];
 let rpc = argv[3];
-const wsProvider = new WsProvider(`wss://${rpc}`);
+const wsProvider = new WsProvider(rpc);
 
 const api = await ApiPromise.create({
   provider: wsProvider,
@@ -14,4 +14,4 @@ await Bun.write(
   JSON.stringify(api.runtimeMetadata.toJSON(), undefined, 2)
 );
 
-console.log("Done, please kill me...");
+process.exit(0);
