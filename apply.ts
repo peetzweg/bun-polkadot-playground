@@ -5,6 +5,11 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { mnemonicGenerate } from "@polkadot/util-crypto";
 import { resolveOnInBlock } from "./src/utils/resolveOn";
 
+console.log({ argv: Bun.argv });
+const AMOUNT = Bun.argv[2];
+
+if (!AMOUNT) throw Error("Please pass an amount of accounts to create");
+
 const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
 const alice = keyring.createFromUri("//Alice");
 
@@ -56,7 +61,9 @@ const fundAccounts = async (addresses: string[]) => {
   return resolveOnInBlock(People.tx.utility.batch)([fundCalls], alice);
 };
 
-const mnemonics = [...Array(3).keys()].map(() => mnemonicGenerate(24));
+const mnemonics = [...Array(Number(AMOUNT)).keys()].map(() =>
+  mnemonicGenerate(24)
+);
 const applicants = prepareAccounts(mnemonics);
 
 await fundAccounts(applicants.map((a) => a.address));

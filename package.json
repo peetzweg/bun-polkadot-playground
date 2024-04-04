@@ -3,28 +3,33 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "metadata:relay": "./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
-    "metadata:people": "./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
-    "metadata:bulletin": "./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC",
+    "metadata:relay": "source .env && ./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
+    "metadata:people": "source .env &&  ./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
+    "metadata:bulletin": "source .env && ./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC",
     "build": "bun build ./cid.ts --compile --outfile ./dist/cid"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "@polkadot/typegen": "^10.12.6"
   },
   "peerDependencies": {
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "@helia/strings": "^2.0.1",
+    "@helia/unixfs": "^3.0.3",
     "@multiformats/blake2": "^2.0.2",
-    "@polkadot/api": "^10.12.1",
-    "@polkadot/api-augment": "^10.12.1",
-    "@polkadot/api-contract": "^10.12.1",
+    "@polkadot/api": "^10.12.6",
+    "@polkadot/api-augment": "^10.12.6",
+    "@polkadot/api-contract": "^10.12.6",
     "@polkadot/keyring": "^12.6.2",
-    "@polkadot/types": "^10.12.1",
+    "@polkadot/types": "^10.12.6",
+    "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
+    "blockstore-core": "^4.4.0",
     "cids": "^1.1.9",
-    "helia": "^3.0.1",
+    "helia": "^4.1.0",
+    "ipfs-unixfs-importer": "^15.2.4",
     "multihashes": "^4.0.3",
     "ts-node": "^10.9.2"
   }

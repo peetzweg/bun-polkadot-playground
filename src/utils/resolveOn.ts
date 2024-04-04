@@ -14,6 +14,7 @@ export const resolveOn =
       extrinsicFn(...parameters).signAndSend(
         addressOrPair,
         ({ status, dispatchError }) => {
+          console.info(status.type);
           if (dispatchError) {
             if (dispatchError.isModule) {
               const { docs, method, section } =
