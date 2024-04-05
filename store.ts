@@ -1,90 +1,95 @@
-import { api as Bulletin } from "./src/apis/bulletin";
-import { u8aToHex } from "@polkadot/util";
-import { Keyring } from "@polkadot/keyring";
-import { resolveOnInBlock } from "./src/utils/resolveOn";
-import { blake2AsU8a } from "@polkadot/util-crypto";
-import { MemoryBlockstore } from "blockstore-core";
-import { FileCandidate, importFile } from "ipfs-unixfs-importer";
-import { fixedSize } from "ipfs-unixfs-importer/chunker";
+/**
+ * POC of storing big files using Bulletin Chain "transactionStorage.store" extrinsic
+ * Stored file can be reconstructed using the instructions stored as well,
+ * see `retrieve.ts` for the reconstruction process
+ *
+ * Usage:
+ * bun run store.ts "<MNEMONIC>" "<FILE_PATH>"
+ *
+ * Example:
+ * bun run store.ts "annual couch beauty can purpose puppy slab run liar liberty wedding disorder zebra frown family add robot candy add carbon vague lock nuclear police" ./evidence.mov
+ */
 
-const defaultChunkValidator = console.log({ argv: Bun.argv });
+import { Keyring } from "@polkadot/keyring";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { u8aToHex } from "@polkadot/util";
+import { blake2AsHex, blake2AsU8a } from "@polkadot/util-crypto";
+import path from "node:path";
+import { api as Bulletin } from "./src/apis/bulletin";
+import { resolveOnInBlock } from "./src/utils/resolveOn";
+
+const CHUNK_SIZE = 1024 * 1024 * 3;
+
+export interface Instructions {
+  chunks: string[]; // hashes of chunks
+  path: string; // file name, useful for filetype
+  // Optional fields
+  hash?: string; // hash of the whole file (Not needed as we have hash of each chunk)
+  totalSize?: number; // total size of the file (Not needed as we can make sure each chunk is correct)
+}
+
+export const storeEvidence = async (filePath: string, account: KeyringPair) => {
+  console.info("Using chunk size of", CHUNK_SIZE / 1e6, "MB");
+  const store = resolveOnInBlock(Bulletin.tx.transactionStorage.store);
+
+  const file = Bun.file(filePath);
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  // Chunk the file and keep hashes of chunks
+  const chunks: Uint8Array[] = [];
+  const chunkHashes: string[] = [];
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.slice(i, i + CHUNK_SIZE);
+    const chunkHash = blake2AsHex(chunk);
+
+    chunkHashes.push(chunkHash);
+    chunks.push(bytes.slice(i, i + CHUNK_SIZE));
+  }
+  console.log("Total chunks", chunks.length);
+
+  // Store each chunk
+  for await (const chunk of chunks) {
+    const chunkHash = blake2AsU8a(chunk);
+
+    const encodedChunk = Bulletin.createType("Bytes", u8aToHex(chunk));
+    await store([encodedChunk], account);
+    console.log("Chunk stored");
+  }
+
+  // Prepare instructions for reconstruction
+  const instructions: Instructions = {
+    chunks: chunkHashes,
+    hash: blake2AsHex(bytes),
+    totalSize: bytes.length,
+    path: path.basename(FILE_PATH),
+  };
+
+  const encodedInstructions = Bulletin.createType(
+    "Bytes",
+    JSON.stringify(instructions)
+  );
+
+  await store([encodedInstructions], account);
+  const instructionsHash = blake2AsHex(encodedInstructions);
+  console.log("Instructions stored:", instructionsHash);
+  console.log(JSON.stringify(instructions, null, 2));
+};
+
 const MNEMONIC = Bun.argv[2];
-const FILE = Bun.argv[3];
+const FILE_PATH = Bun.argv[3];
+
+console.log({
+  MNEMONIC,
+  FILE_PATH,
+});
 
 if (!MNEMONIC) throw Error("Please pass an MNEMONIC to use");
-if (!FILE) throw Error("Please pass a FILE to store");
+if (!FILE_PATH) throw Error("Please pass a FILE_PATH to store");
 
 const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
 const account = keyring.createFromUri(MNEMONIC);
 
-const store = resolveOnInBlock(Bulletin.tx.transactionStorage.store);
+await storeEvidence(FILE_PATH, account);
 
-const file = Bun.file(FILE);
-
-const buffer = await file.arrayBuffer();
-const bytes = new Uint8Array(buffer);
-console.log({ bytes: bytes });
-
-// chunk with ipfs-unixfs-importer
-const blockstore = new MemoryBlockstore();
-
-for await (const chunk of blockstore.getAll()) {
-  const chunkBytes = new Uint8Array(chunk.block.buffer);
-  const encodedChunk = Bulletin.createType("Bytes", u8aToHex(chunkBytes));
-  console.log({
-    chunk: chunkBytes.length,
-    cid: chunk.cid,
-  });
-  //   await store([encodedChunk], account);
-  console.log("Chunk stored");
-}
-console.log("blockstore dumped");
-
-const input: FileCandidate = {
-  path: "./demo.mov",
-  content: bytes,
-};
-const realChunks: Uint8Array[] = [];
-const entry = await importFile(input, blockstore, {
-  chunker: fixedSize({ chunkSize: 1024 * 1024 * 2 }),
-  chunkValidator: async function* validateChunks(source) {
-    console.log("Validating chunks");
-    for await (const content of source) {
-      if (content.length === undefined) {
-        throw (new Error("Content was invalid"), "ERR_INVALID_CONTENT");
-      }
-
-      if (Array.isArray(content)) {
-        const bytes = Uint8Array.from(content);
-        realChunks.push(content);
-        yield bytes;
-      } else if (content instanceof Uint8Array) {
-        realChunks.push(content);
-        yield content;
-      } else {
-        throw (new Error("Content was invalid"), "ERR_INVALID_CONTENT");
-      }
-    }
-  },
-});
-
-console.log({ realChunks });
-
-for await (const chunk of blockstore.getAll()) {
-  const encodedChunk = Bulletin.createType("Bytes", u8aToHex(chunk.block));
-  console.log({
-    blockLength: chunk.block.length,
-    cid: chunk.cid,
-  });
-  await store([encodedChunk], account);
-  console.log("Chunk stored");
-}
-
-console.log({
-  entryCid: entry.cid,
-  fileSize: entry.unixfs?.fileSize(),
-  type: entry.unixfs?.type,
-  mode: entry.unixfs?.mode,
-  isDirectory: entry.unixfs?.isDirectory(),
-});
 process.exit(0);
