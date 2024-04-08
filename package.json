@@ -6,7 +6,8 @@
     "metadata:relay": "source .env && ./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
     "metadata:people": "source .env &&  ./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
     "metadata:bulletin": "source .env && ./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC",
-    "build": "bun build ./cid.ts --compile --outfile ./dist/cid"
+    "build": "bun build ./cli.ts --compile --outfile ./dist/cli",
+    "cli": "bun run cli.ts"
   },
   "devDependencies": {
     "bun-types": "latest",
@@ -27,6 +28,7 @@
     "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
     "blockstore-core": "^4.4.0",
+    "cac": "^6.7.14",
     "cids": "^1.1.9",
     "helia": "^4.1.0",
     "ipfs-unixfs-importer": "^15.2.4",
