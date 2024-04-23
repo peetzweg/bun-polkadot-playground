@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
@@ -488,6 +487,10 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       candidates: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Option<PalletProofOfInkCandidate>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
+       * The committed designs which are no longer available.
+       **/
+      committedDesigns: AugmentedQuery<ApiType, (arg: ITuple<[u16, u16]> | [u16 | AnyNumber | Uint8Array, u16 | AnyNumber | Uint8Array]) => Observable<Option<PalletProofOfInkDesignStatus>>, [ITuple<[u16, u16]>]> & QueryableStorageEntry<ApiType, [ITuple<[u16, u16]>]>;
+      /**
        * The configuration.
        **/
       configuration: AugmentedQuery<ApiType, () => Observable<PalletProofOfInkConfigRecord>, []> & QueryableStorageEntry<ApiType, []>;
@@ -508,10 +511,6 @@ declare module '@polkadot/api-base/types/storage' {
        * Candidates' reserved identities which we track.
        **/
       reserved: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<AccountId32>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
-      /**
-       * The active stubs.
-       **/
-      stubs: AugmentedQuery<ApiType, (arg: U8aFixed | string | Uint8Array) => Observable<Option<u64>>, [U8aFixed]> & QueryableStorageEntry<ApiType, [U8aFixed]>;
       /**
        * Generic query
        **/

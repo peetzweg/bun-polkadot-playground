@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
@@ -404,13 +403,9 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       apply: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
-       * See [`Pallet::apply_with_ticket`].
+       * See [`Pallet::apply_with_signature`].
        **/
-      applyWithTicket: AugmentedSubmittable<(ticket: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
-      /**
-       * See [`Pallet::cancel_stub`].
-       **/
-      cancelStub: AugmentedSubmittable<(stub: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
+      applyWithSignature: AugmentedSubmittable<(referrer: u64 | AnyNumber | Uint8Array, signature: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, U8aFixed]>;
       /**
        * See [`Pallet::commit`].
        **/
@@ -431,10 +426,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * See [`Pallet::referred_apply`].
        **/
       referredApply: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
-      /**
-       * See [`Pallet::refer_ticket`].
-       **/
-      referTicket: AugmentedSubmittable<(stub: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
       /**
        * See [`Pallet::register`].
        **/

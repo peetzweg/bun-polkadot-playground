@@ -6,17 +6,15 @@
 import '@polkadot/api-base/types/calls';
 
 import type { ApiTypes, AugmentedCall, DecoratedCallBase } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, Vec, u32 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Vec, u32 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { CheckInherentsResult, InherentData } from '@polkadot/types/interfaces/blockbuilder';
 import type { BlockHash } from '@polkadot/types/interfaces/chain';
-import type { AuthorityId } from '@polkadot/types/interfaces/consensus';
-import type { CollationInfo } from '@polkadot/types/interfaces/cumulus';
+import type { CodeSource, CodeUploadResult, ContractExecResult, ContractInstantiateResult } from '@polkadot/types/interfaces/contracts';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
-import type { GenesisBuildErr } from '@polkadot/types/interfaces/genesisBuilder';
 import type { OpaqueMetadata } from '@polkadot/types/interfaces/metadata';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
-import type { AccountId, Balance, Block, Call, Header, Index, KeyTypeId, SlotDuration, Weight } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, Balance, Block, Call, Header, Index, KeyTypeId, Weight, WeightV2 } from '@polkadot/types/interfaces/runtime';
 import type { RuntimeVersion } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult } from '@polkadot/types/interfaces/system';
 import type { TransactionSource, TransactionValidity } from '@polkadot/types/interfaces/txqueue';
@@ -33,21 +31,6 @@ declare module '@polkadot/api-base/types/calls' {
        * The API to query account nonce (aka transaction index)
        **/
       accountNonce: AugmentedCall<ApiType, (accountId: AccountId | string | Uint8Array) => Observable<Index>>;
-      /**
-       * Generic call
-       **/
-      [key: string]: DecoratedCallBase<ApiType>;
-    };
-    /** 0xdd718d5cc53262d4/1 */
-    auraApi: {
-      /**
-       * Return the current set of authorities.
-       **/
-      authorities: AugmentedCall<ApiType, () => Observable<Vec<AuthorityId>>>;
-      /**
-       * Returns the slot duration for Aura.
-       **/
-      slotDuration: AugmentedCall<ApiType, () => Observable<SlotDuration>>;
       /**
        * Generic call
        **/
@@ -76,12 +59,24 @@ declare module '@polkadot/api-base/types/calls' {
        **/
       [key: string]: DecoratedCallBase<ApiType>;
     };
-    /** 0xea93e3f16f3d6962/2 */
-    collectCollationInfo: {
+    /** 0x68b66ba122c93fa7/2 */
+    contractsApi: {
       /**
-       * Collect information about a collation.
+       * Perform a call from a specified account to a given contract.
        **/
-      collectCollationInfo: AugmentedCall<ApiType, (header: Header | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any } | string | Uint8Array) => Observable<CollationInfo>>;
+      call: AugmentedCall<ApiType, (origin: AccountId | string | Uint8Array, dest: AccountId | string | Uint8Array, value: Balance | AnyNumber | Uint8Array, gasLimit: Option<WeightV2> | null | Uint8Array | WeightV2 | { refTime?: any; proofSize?: any } | string, storageDepositLimit: Option<Balance> | null | Uint8Array | Balance | AnyNumber, inputData: Bytes | string | Uint8Array) => Observable<ContractExecResult>>;
+      /**
+       * Query a given storage key in a given contract.
+       **/
+      getStorage: AugmentedCall<ApiType, (address: AccountId | string | Uint8Array, key: Bytes | string | Uint8Array) => Observable<Option<Bytes>>>;
+      /**
+       * Instantiate a new contract.
+       **/
+      instantiate: AugmentedCall<ApiType, (origin: AccountId | string | Uint8Array, value: Balance | AnyNumber | Uint8Array, gasLimit: Option<WeightV2> | null | Uint8Array | WeightV2 | { refTime?: any; proofSize?: any } | string, storageDepositLimit: Option<Balance> | null | Uint8Array | Balance | AnyNumber, code: CodeSource | { Upload: any } | { Existing: any } | string | Uint8Array, data: Bytes | string | Uint8Array, salt: Bytes | string | Uint8Array) => Observable<ContractInstantiateResult>>;
+      /**
+       * Upload new code without instantiating a contract from it.
+       **/
+      uploadCode: AugmentedCall<ApiType, (origin: AccountId | string | Uint8Array, code: Bytes | string | Uint8Array, storageDepositLimit: Option<Balance> | null | Uint8Array | Balance | AnyNumber) => Observable<CodeUploadResult>>;
       /**
        * Generic call
        **/
@@ -101,21 +96,6 @@ declare module '@polkadot/api-base/types/calls' {
        * Returns the version of the runtime.
        **/
       version: AugmentedCall<ApiType, () => Observable<RuntimeVersion>>;
-      /**
-       * Generic call
-       **/
-      [key: string]: DecoratedCallBase<ApiType>;
-    };
-    /** 0xfbc577b9d747efd6/1 */
-    genesisBuilder: {
-      /**
-       * Build `RuntimeGenesisConfig` from a JSON blob not using any defaults and store it in the storage.
-       **/
-      buildConfig: AugmentedCall<ApiType, (json: Bytes | string | Uint8Array) => Observable<Result<ITuple<[]>, GenesisBuildErr>>>;
-      /**
-       * Creates the default `RuntimeGenesisConfig` and returns it as a JSON blob.
-       **/
-      createDefaultConfig: AugmentedCall<ApiType, () => Observable<Bytes>>;
       /**
        * Generic call
        **/

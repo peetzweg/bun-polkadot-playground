@@ -6,13 +6,52 @@
 import '@polkadot/api-base/types/consts';
 
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
+import type { Perbill } from '@polkadot/types/interfaces/runtime';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
+    assets: {
+      /**
+       * The amount of funds that must be reserved when creating a new approval.
+       **/
+      approvalDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * The amount of funds that must be reserved for a non-provider asset account to be
+       * maintained.
+       **/
+      assetAccountDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * The basic amount of funds that must be reserved for an asset.
+       **/
+      assetDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * The basic amount of funds that must be reserved when adding metadata to your asset.
+       **/
+      metadataDepositBase: u128 & AugmentedConst<ApiType>;
+      /**
+       * The additional funds that must be reserved for the number of bytes you store in your
+       * metadata.
+       **/
+      metadataDepositPerByte: u128 & AugmentedConst<ApiType>;
+      /**
+       * Max number of items to destroy per `destroy_accounts` and `destroy_approvals` call.
+       * 
+       * Must be configured to result in a weight that makes each call fit in a block.
+       **/
+      removeItemsLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum length of a name or symbol stored on-chain.
+       **/
+      stringLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     balances: {
       /**
        * The minimum amount required to keep an account open. MUST BE GREATER THAN ZERO!
@@ -47,113 +86,78 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
-    identity: {
+    contracts: {
       /**
-       * The amount held on deposit for a registered identity.
+       * The percentage of the storage deposit that should be held for using a code hash.
+       * Instantiating a contract, or calling [`chain_extension::Ext::add_delegate_dependency`]
+       * protects the code from being removed. In order to prevent abuse these actions are
+       * protected with a percentage of the code deposit.
        **/
-      basicDeposit: u128 & AugmentedConst<ApiType>;
+      codeHashLockupDepositPercent: Perbill & AugmentedConst<ApiType>;
       /**
-       * The amount held on deposit per encoded byte for a registered identity.
+       * Fallback value to limit the storage deposit if it's not being set by the caller.
        **/
-      byteDeposit: u128 & AugmentedConst<ApiType>;
+      defaultDepositLimit: u128 & AugmentedConst<ApiType>;
       /**
-       * Maxmimum number of registrars allowed in the system. Needed to bound the complexity
-       * of, e.g., updating judgements.
-       **/
-      maxRegistrars: u32 & AugmentedConst<ApiType>;
-      /**
-       * The maximum number of sub-accounts allowed per identified account.
-       **/
-      maxSubAccounts: u32 & AugmentedConst<ApiType>;
-      /**
-       * The maximum length of a suffix.
-       **/
-      maxSuffixLength: u32 & AugmentedConst<ApiType>;
-      /**
-       * The maximum length of a username, including its suffix and any system-added delimiters.
-       **/
-      maxUsernameLength: u32 & AugmentedConst<ApiType>;
-      /**
-       * The number of blocks within which a username grant must be accepted.
-       **/
-      pendingUsernameExpiration: u32 & AugmentedConst<ApiType>;
-      /**
-       * The amount held on deposit for a registered subaccount. This should account for the fact
-       * that one storage item's value will increase by the size of an account ID, and there will
-       * be another trie item whose value is the size of an account ID plus 32 bytes.
-       **/
-      subAccountDeposit: u128 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    messageQueue: {
-      /**
-       * The size of the page; this implies the maximum message size which can be sent.
+       * The amount of balance a caller has to pay for each byte of storage.
        * 
-       * A good value depends on the expected message sizes, their weights, the weight that is
-       * available for processing them and the maximal needed message size. The maximal message
-       * size is slightly lower than this as defined by [`MaxMessageLenOf`].
-       **/
-      heapSize: u32 & AugmentedConst<ApiType>;
-      /**
-       * The maximum number of stale pages (i.e. of overweight messages) allowed before culling
-       * can happen. Once there are more stale pages than this, then historical pages may be
-       * dropped, even if they contain unprocessed overweight messages.
-       **/
-      maxStale: u32 & AugmentedConst<ApiType>;
-      /**
-       * The amount of weight (if any) which should be provided to the message queue for
-       * servicing enqueued items.
+       * # Note
        * 
-       * This may be legitimately `None` in the case that you will call
-       * `ServiceQueues::service_queues` manually.
+       * Changing this value for an existing chain might need a storage migration.
        **/
-      serviceWeight: Option<SpWeightsWeightV2Weight> & AugmentedConst<ApiType>;
+      depositPerByte: u128 & AugmentedConst<ApiType>;
       /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    mobRule: {
-      /**
-       * The number of seconds before a case times out and can be reaped.
-       **/
-      caseTimeoutSecs: u64 & AugmentedConst<ApiType>;
-      /**
-       * The maximum number of hours for which a case could stay open for voting.
-       **/
-      maxCaseDuration: u32 & AugmentedConst<ApiType>;
-      /**
-       * The number of hours a case must stay open for voting before it can be closed.
-       **/
-      minCaseDuration: u32 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    multisig: {
-      /**
-       * The base amount of currency needed to reserve for creating a multisig execution or to
-       * store a dispatch call for later.
+       * The amount of balance a caller has to pay for each storage item.
        * 
-       * This is held for an additional storage item whose value size is
-       * `4 + sizeof((BlockNumber, Balance, AccountId))` bytes and whose key size is
-       * `32 + sizeof(AccountId)` bytes.
-       **/
-      depositBase: u128 & AugmentedConst<ApiType>;
-      /**
-       * The amount of currency needed per unit threshold when creating a multisig execution.
+       * # Note
        * 
-       * This is held for adding 32 bytes more into a pre-existing storage value.
+       * Changing this value for an existing chain might need a storage migration.
        **/
-      depositFactor: u128 & AugmentedConst<ApiType>;
+      depositPerItem: u128 & AugmentedConst<ApiType>;
       /**
-       * The maximum amount of signatories allowed in the multisig.
+       * Type that bundles together all the runtime configurable interface types.
+       * 
+       * This is not a real config. We just mention the type here as constant so that
+       * its type appears in the metadata. Only valid value is `()`.
        **/
-      maxSignatories: u32 & AugmentedConst<ApiType>;
+      environment: PalletContractsEnvironment & AugmentedConst<ApiType>;
+      /**
+       * The maximum length of a contract code in bytes.
+       * 
+       * The value should be chosen carefully taking into the account the overall memory limit
+       * your runtime has, as well as the [maximum allowed callstack
+       * depth](#associatedtype.CallStack). Look into the `integrity_test()` for some insights.
+       **/
+      maxCodeLen: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum length of the debug buffer in bytes.
+       **/
+      maxDebugBufferLen: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of delegate_dependencies that a contract can lock with
+       * [`chain_extension::Ext::add_delegate_dependency`].
+       **/
+      maxDelegateDependencies: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum allowable length in bytes for storage keys.
+       **/
+      maxStorageKeyLen: u32 & AugmentedConst<ApiType>;
+      /**
+       * Cost schedule and limits.
+       **/
+      schedule: PalletContractsSchedule & AugmentedConst<ApiType>;
+      /**
+       * Make contract callable functions marked as `#[unstable]` available.
+       * 
+       * Contracts that use `#[unstable]` functions won't be able to be uploaded unless
+       * this is set to `true`. This is only meant for testnets and dev nodes in order to
+       * experiment with new features.
+       * 
+       * # Warning
+       * 
+       * Do **not** set to `true` on productions chains.
+       **/
+      unsafeUnstableInterface: bool & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -210,10 +214,10 @@ declare module '@polkadot/api-base/types/consts' {
     };
     transactionPayment: {
       /**
-       * A fee multiplier for `Operational` extrinsics to compute "virtual tip" to boost their
+       * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
        * 
-       * This value is multiplied by the `final_fee` to obtain a "virtual tip" that is later
+       * This value is multipled by the `final_fee` to obtain a "virtual tip" that is later
        * added to a tip component in regular `priority` calculations.
        * It means that a `Normal` transaction can front-run a similarly-sized `Operational`
        * extrinsic (with no tip), by including a tip value greater than the virtual tip.
@@ -243,20 +247,6 @@ declare module '@polkadot/api-base/types/consts' {
        * The limit on the number of batched calls.
        **/
       batchedCallsLimit: u32 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    xcmpQueue: {
-      /**
-       * The maximum number of inbound XCMP channels that can be suspended simultaneously.
-       * 
-       * Any further channel suspensions will fail and messages may get dropped without further
-       * notice. Choosing a high value (1000) is okay; the trade-off that is described in
-       * [`InboundXcmpSuspended`] still applies at that scale.
-       **/
-      maxInboundSuspended: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

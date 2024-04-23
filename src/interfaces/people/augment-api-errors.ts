@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
@@ -646,6 +645,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       DesignInvalid: AugmentedError<ApiType>;
       /**
+       * The referrer's design is already taken.
+       **/
+      DesignTaken: AugmentedError<ApiType>;
+      /**
        * The personal identity has already been reserved.
        **/
       IdReserved: AugmentedError<ApiType>;
@@ -690,6 +693,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotAuthorized: AugmentedError<ApiType>;
       /**
+       * The personal identity doesn't exist.
+       **/
+      NotPerson: AugmentedError<ApiType>;
+      /**
        * The candidate did not prove themselves yet.
        **/
       NotProven: AugmentedError<ApiType>;
@@ -701,10 +708,6 @@ declare module '@polkadot/api-base/types/errors' {
        * The personal ID is not in range.
        **/
       OutOfRange: AugmentedError<ApiType>;
-      /**
-       * The given stub is already in use.
-       **/
-      StubInUse: AugmentedError<ApiType>;
       /**
        * The reroll is too early.
        **/
