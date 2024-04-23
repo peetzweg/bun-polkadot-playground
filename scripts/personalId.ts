@@ -1,5 +1,5 @@
 import { u8aToHex } from "@polkadot/util";
-import { api } from "./src/apis/people";
+import { api } from "../src/apis/people";
 
 const memberKey = Bun.argv[2];
 if (!memberKey) throw "No Member Key Passed";

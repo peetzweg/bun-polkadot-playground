@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { Abi } from "@polkadot/api-contract";
 import Erc20Metadata from "./erc20.json";
-import METADATA from "./metadata/json/contracts-node.json";
+import METADATA from "../metadata/json/contracts-node.json";
 import { Metadata, TypeRegistry } from "@polkadot/types";
 const wsProvider = new WsProvider(`ws://127.0.0.01:9944`);
 

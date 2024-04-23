@@ -1,6 +1,6 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
-import abi from "./src/abis/basic_contract_caller.json";
+import abi from "../src/abis/basic_contract_caller.json";
 const wsProvider = new WsProvider(`wss://${Bun.env.CONTRACTS_RPC}`);
 
 const api = await ApiPromise.create({

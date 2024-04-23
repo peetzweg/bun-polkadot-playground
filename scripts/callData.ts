@@ -1,4 +1,4 @@
-import { api } from "./src/apis/bulletin";
+import { api } from "../src/apis/bulletin";
 import { u8aToHex } from "@polkadot/util";
 
 // const call = api.tx.proofOfInk.apply();
