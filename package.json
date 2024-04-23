@@ -3,9 +3,10 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "metadata:relay": "source .env && ./typegen.sh relay https://$RELAY_RPC && bun run metadata.ts relay $RELAY_RPC",
-    "metadata:people": "source .env &&  ./typegen.sh people https://$PEOPLE_RPC && bun run metadata.ts people $PEOPLE_RPC",
-    "metadata:bulletin": "source .env && ./typegen.sh bulletin https://$BULLETIN_RPC && bun run metadata.ts bulletin $BULLETIN_RPC",
+    "metadata:relay": "source .env && ./typegen.sh relay https://$RELAY_RPC",
+    "metadata:people": "source .env &&  ./typegen.sh people https://$PEOPLE_RPC",
+    "metadata:bulletin": "source .env && ./typegen.sh bulletin https://$BULLETIN_RPC",
+    "metadata:local": "source .env && ./typegen.sh local http://$LOCAL_RPC",
     "build": "bun build ./cli.ts --compile --outfile ./dist/cli",
     "cli": "bun run cli.ts"
   },
