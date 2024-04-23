@@ -33,21 +33,20 @@ const restoreEvidence = async (hash: string): Promise<[Uint8Array, string]> => {
   const instructions = (await response.json()) as Instructions;
   console.info({ instructions });
 
-  // Fetch each chunk mentioned in instructions from IPFS
-  const blobPromises = instructions.chunks.map(async (chunkHash) => {
+  const blobs = [];
+  // Fetch each chunk sequentially, to avoid overloading the IPFS node, parallel fetches caused issues
+  for await (const chunkHash of instructions.chunks) {
     const cid = blake2bToCid(chunkHash);
-    console.info("fetching...", cid.toString());
+    console.info(cid.toString(), "fetching...");
     const response = await fetch(getBlockURL(cid.toString()), {
       method: "POST",
     });
 
-    console.info("received chunk:", cid.toString());
+    console.info(cid.toString(), "received!");
 
-    return response.blob();
-  });
+    blobs.push(await response.blob());
+  }
 
-  // Reconstruct the file from fetched chunks
-  const blobs = await Promise.all(blobPromises);
   const buffers = await Promise.all(blobs.map((b) => b.arrayBuffer()));
   const input = buffers.map((b) => [...new Uint8Array(b)]).flat();
   const wholeFile = new Uint8Array([...input]);
@@ -70,10 +69,9 @@ console.log({
 });
 
 if (!EVIDENCE_HASH) throw Error("Please pass an EVIDENCE_HASH to use");
-if (!OUTPUT_NAME) throw Error("Please pass an OUTPUT_NAME to use");
 
 const [evidenceBytes, suffix] = await restoreEvidence(EVIDENCE_HASH);
 
-await Bun.write(`./${OUTPUT_NAME}.${suffix}`, evidenceBytes);
+await Bun.write(`./${EVIDENCE_HASH}.${suffix}`, evidenceBytes);
 
 process.exit(0);
