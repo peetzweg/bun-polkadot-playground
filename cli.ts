@@ -2,6 +2,8 @@ import cac from "cac";
 import { apply } from "./src/features/apply";
 import { cidForFile } from "./src/features/cid";
 import { sudoXcm } from "./src/features/sudoxcm";
+import Keyring from "@polkadot/keyring";
+import { storeEvidence } from "./src/features/store";
 
 const cli = cac("pop");
 
@@ -30,6 +32,16 @@ cli
   .command("sudoxcm <encoded_call>", "returns the CID of given file")
   .action(async (encodedCall) => {
     await sudoXcm(encodedCall);
+  });
+
+// store
+cli
+  .command("store <file_path> <mnemonic>", "returns the CID of given file")
+  .action(async (filePath, mnemonic) => {
+    const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
+    const account = keyring.createFromUri(mnemonic);
+
+    await storeEvidence(filePath, account);
   });
 
 // Setup help
