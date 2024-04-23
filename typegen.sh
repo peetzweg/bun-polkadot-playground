@@ -1,3 +1,4 @@
+set -x
 filename=$1
 rpc=$2
 
