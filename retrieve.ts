@@ -14,19 +14,18 @@ import { blake2AsHex } from "@polkadot/util-crypto";
 import { blake2bToCid } from "./src/utils/blake2bToCid";
 import { Instructions } from "./store";
 
-const getBlockURL = (cid: string) =>
-  `http://127.0.0.1:5001/api/v0/block/get?arg=${cid}`;
+if (Bun.env.IPFS_GATEWAY === undefined)
+  throw Error("Please set IPFS_GATEWAY in .env file");
+
+const getBlockURL = (cid: string) => `${Bun.env.IPFS_GATEWAY}/${cid}`;
 
 const restoreEvidence = async (hash: string): Promise<[Uint8Array, string]> => {
   // Convert hash to CID
-  const evidenceCid = blake2bToCid(hash);
+  const evidenceCid = blake2bToCid(hash, "json");
 
   // Fetch instructions
   const response = await fetch(getBlockURL(evidenceCid.toString()), {
-    method: "POST",
-    headers: {
-      Origin: "http://localhost:5173",
-    },
+    method: "GET",
   });
 
   // Parse instructions
@@ -36,10 +35,10 @@ const restoreEvidence = async (hash: string): Promise<[Uint8Array, string]> => {
   const blobs = [];
   // Fetch each chunk sequentially, to avoid overloading the IPFS node, parallel fetches caused issues
   for await (const chunkHash of instructions.chunks) {
-    const cid = blake2bToCid(chunkHash);
+    const cid = blake2bToCid(chunkHash, "raw");
     console.info(cid.toString(), "fetching...");
     const response = await fetch(getBlockURL(cid.toString()), {
-      method: "POST",
+      method: "GET",
     });
 
     console.info(cid.toString(), "received!");
