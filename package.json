@@ -8,7 +8,8 @@
     "metadata:bulletin": "source .env && ./typegen.sh bulletin https://$BULLETIN_RPC",
     "metadata:local": "source .env && ./typegen.sh local http://$LOCAL_RPC",
     "build": "bun build ./cli.ts --compile --outfile ./dist/cli",
-    "cli": "bun run cli.ts"
+    "cli": "bun run cli.ts",
+    "postinstall": "bunx patch-package"
   },
   "devDependencies": {
     "bun-types": "latest",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@helia/strings": "^2.0.1",
     "@helia/unixfs": "^3.0.3",
+    "@ipld/dag-json": "^10.2.0",
     "@multiformats/blake2": "^2.0.2",
     "@polkadot/api": "^10.12.6",
     "@polkadot/api-augment": "^10.12.6",
@@ -28,11 +30,11 @@
     "@polkadot/types": "^10.12.6",
     "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
-    "blockstore-core": "^4.4.0",
+    "blockstore-core": "^4.4.1",
     "cac": "^6.7.14",
     "cids": "^1.1.9",
     "helia": "^4.1.0",
-    "ipfs-unixfs-importer": "^15.2.4",
+    "ipfs-unixfs-importer": "^15.2.5",
     "multihashes": "^4.0.3",
     "ts-node": "^10.9.2"
   }
