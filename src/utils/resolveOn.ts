@@ -1,3 +1,6 @@
+import { ApiPromise } from "@polkadot/api";
+import { ContractTx } from "@polkadot/api-contract/base/types";
+import { ContractOptions } from "@polkadot/api-contract/types";
 import {
   AddressOrPair,
   SubmittableExtrinsicFunction,
@@ -44,3 +47,42 @@ export const resolveOnInBlock = <
 >(
   extrinsicFn: TExtrinsicFn
 ) => resolveOn(extrinsicFn, "InBlock");
+
+export const resolveContractTxOn =
+  <TExtrinsicFn extends ContractTx<"promise">>(
+    extrinsicFn: TExtrinsicFn,
+    state: ISubmittableResult["status"]["type"],
+    api?: ApiPromise
+  ) =>
+  (addressOrPair: AddressOrPair, options: ContractOptions, ...params: any) =>
+    new Promise<void>((resolve, reject) => {
+      extrinsicFn(options, ...params).signAndSend(
+        addressOrPair,
+        ({ status, dispatchError }) => {
+          if (dispatchError) {
+            if (dispatchError.isModule) {
+              if (api) {
+                const { docs, method, section } = api.registry.findMetaError(
+                  dispatchError.asModule
+                );
+                console.log(dispatchError.asModule.toHuman());
+                reject(new Error(`${section}.${method}: ${docs.join(" ")}`));
+              }
+              reject(
+                new Error(
+                  "dispatchError, isModule",
+                  dispatchError.asModule.toHuman()
+                )
+              );
+            } else {
+              console.error("Unhandled dispatchError", dispatchError);
+              reject(dispatchError);
+            }
+          }
+
+          if (status.type === state) {
+            resolve();
+          }
+        }
+      );
+    });
