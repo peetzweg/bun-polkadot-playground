@@ -1,13 +1,8 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
-import {
-  contractQuery,
-  decodeOutput,
-  getMaxGasLimit,
-} from "@scio-labs/use-inkathon";
-import abi from "./src/abis/linkv3.json";
-import { WeightV2 } from "@polkadot/types/interfaces";
-import { resolveSlug } from "./tinyink/resolveSlug";
+import { getMaxGasLimit } from "@scio-labs/use-inkathon";
+import abi from "../src/abis/linkv3.json";
+import { resolveSlug } from "./resolveSlug";
 const wsProvider = new WsProvider(`wss://${Bun.env.CONTRACTS_RPC}`);
 
 const content = Bun.file("./content.txt");
