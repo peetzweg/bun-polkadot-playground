@@ -1,4 +1,4 @@
-import { api as People } from "../apis/people";
+import { getApi } from "../apis";
 
 import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
@@ -6,6 +6,8 @@ import { mnemonicGenerate } from "@polkadot/util-crypto";
 import { resolveOnInBlock } from "../utils/resolveOn";
 
 export const apply = async (amount: number) => {
+  const People = await getApi("People");
+
   const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
   const alice = keyring.createFromUri("//Alice");
 
@@ -28,7 +30,7 @@ export const apply = async (amount: number) => {
     console.log("committed", applicant.address);
 
     await submitEvidence(
-      ["0x6fa5b30653bdf9a9233a497d5c30ae40238732a04a1a9dc7ea97b03b9348ca2c"],
+      ["0xe81830c7d3b35e34354d0805498657ef06efa0980bb1e4a9b66197dfdd0883c9"],
       applicant
     );
 

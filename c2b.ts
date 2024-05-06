@@ -1,11 +1,7 @@
-import { blake2AsU8a } from "@polkadot/util-crypto";
-import { blake2b256 } from "@multiformats/blake2/blake2b";
-import Multihashes from "multihashes";
 import CID from "cids";
+import Multihashes from "multihashes";
 
-import { u8aToHex, hexToU8a } from "@polkadot/util";
-import { blake2bToCid } from "./src/utils/blake2bToCid";
-import cli from "cac";
+import { u8aToHex } from "@polkadot/util";
 
 const cidString = Bun.argv[2];
 if (!cidString) throw Error("Please pass a CID to use");

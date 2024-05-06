@@ -1,4 +1,3 @@
-import { blake2b256 } from "@multiformats/blake2/blake2b";
 import { u8aToHex } from "@polkadot/util";
 import { blake2AsU8a } from "@polkadot/util-crypto";
 import CID from "cids";

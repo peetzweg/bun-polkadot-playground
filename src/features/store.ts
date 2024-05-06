@@ -10,12 +10,11 @@
  * bun run store.ts "annual couch beauty can purpose puppy slab run liar liberty wedding disorder zebra frown family add robot candy add carbon vague lock nuclear police" ./evidence.mov
  */
 
-import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { u8aToHex } from "@polkadot/util";
 import { blake2AsHex, blake2AsU8a } from "@polkadot/util-crypto";
 import path from "node:path";
-import { api as Bulletin } from "../apis/bulletin";
+import { getApi } from "../apis";
 import { resolveOnInBlock } from "../utils/resolveOn";
 
 const CHUNK_SIZE = 1024 * 1024 * 3;
@@ -29,6 +28,7 @@ export interface Instructions {
 }
 
 export const storeEvidence = async (filePath: string, account: KeyringPair) => {
+  const Bulletin = await getApi("Bulletin");
   console.info("Using chunk size of", CHUNK_SIZE / 1e6, "MB");
   const store = resolveOnInBlock(Bulletin.tx.transactionStorage.store);
 

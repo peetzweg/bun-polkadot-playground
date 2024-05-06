@@ -1,8 +1,9 @@
 import { Keyring } from "@polkadot/api";
-import { api as Relay } from "../apis/relay";
+import { getApi } from "../apis";
 import { resolveOnFinalized } from "../utils/resolveOn";
-
 export const sudoXcm = async (encodedCall: string, parachainId = 1004) => {
+  const Relay = await getApi("Relay");
+
   const destination = {
     V3: { parents: 0, interior: { X1: { Parachain: parachainId } } },
   };

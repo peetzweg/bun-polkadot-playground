@@ -29,14 +29,20 @@ cli
 
 // sudoxcm
 cli
-  .command("sudoxcm <encoded_call>", "returns the CID of given file")
+  .command(
+    "sudoxcm <encoded_call>",
+    "sends sudo xcm to people with given encoded call"
+  )
   .action(async (encodedCall) => {
     await sudoXcm(encodedCall);
   });
 
 // store
 cli
-  .command("store <file_path> <mnemonic>", "returns the CID of given file")
+  .command(
+    "store <file_path> <mnemonic>",
+    "stores given file on chain with given account mnemonic"
+  )
   .action(async (filePath, mnemonic) => {
     const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
     const account = keyring.createFromUri(mnemonic);
