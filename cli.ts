@@ -1,9 +1,10 @@
+import Keyring from "@polkadot/keyring";
 import cac from "cac";
 import { apply } from "./src/features/apply";
 import { cidForFile } from "./src/features/cid";
-import { sudoXcm } from "./src/features/sudoxcm";
-import Keyring from "@polkadot/keyring";
+import { refresh } from "./src/features/refresh";
 import { storeEvidence } from "./src/features/store";
+import { sudoXcm } from "./src/features/sudoxcm";
 
 const cli = cac("pop");
 
@@ -37,6 +38,16 @@ cli
     await sudoXcm(encodedCall);
   });
 
+// refresh
+cli
+  .command(
+    "refresh",
+    "checks if the people root needs refreshing and refreshes if needed"
+  )
+  .action(async (encodedCall) => {
+    await refresh();
+  });
+
 // store
 cli
   .command(
@@ -59,6 +70,7 @@ try {
   // Run the command yourself
   // You only need `await` when your command action returns a Promise
   await cli.runMatchedCommand();
+  process.exit(0);
 } catch (error) {
   if (error instanceof Error) console.error(error.message);
   else {
@@ -67,4 +79,3 @@ try {
 
   process.exit(1);
 }
-process.exit(0);
