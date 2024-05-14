@@ -4,9 +4,11 @@ import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { mnemonicGenerate } from "@polkadot/util-crypto";
 import { resolveOnInBlock } from "../utils/resolveOn";
+import { resolveOnSome } from "../utils/resolveOnSome";
 
 export const apply = async (amount: number) => {
   const People = await getApi("People");
+  const Bulletin = await getApi("Bulletin");
 
   const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
   const alice = keyring.createFromUri("//Alice");
@@ -19,22 +21,35 @@ export const apply = async (amount: number) => {
     People.tx.proofOfInk.submitEvidence,
   ].map((fn) => resolveOnInBlock(fn));
 
+  const authorizations = resolveOnSome(
+    Bulletin.query.transactionStorage.authorizations,
+    { timeout: 60000, tries: 10 }
+  );
+
   const graduateAccount = async (applicant: KeyringPair) => {
     await apply([], applicant);
-    console.log("applied", applicant.address);
+    console.log(applicant.address, "applied");
 
-    await commit(
-      [{ DesignedElective: [0, Math.floor(Math.random() * 96)] }, null],
-      applicant
-    );
-    console.log("committed", applicant.address);
+    // ProceduralAccount: 'u16',
+    // ProceduralPersonal: 'u16',
+    // Procedural: '(u16,u8)',
+    // ProceduralDerivative: '(u64,Option<u64>)'
+    await commit([{ ProceduralAccount: 5 }, null], applicant);
+    console.log(applicant.address, "committed");
+
+    console.log("waiting for authorization...");
+    // await authorizations([
+    //   {
+    //     Account: Bulletin.createType("AccountId", applicant.address),
+    //   },
+    // ]);
+    // console.log(applicant.address, "upload authorization");
 
     await submitEvidence(
       ["0xe81830c7d3b35e34354d0805498657ef06efa0980bb1e4a9b66197dfdd0883c9"],
       applicant
     );
-
-    console.log("evidence provided", applicant.address);
+    console.log(applicant.address, "evidence provided");
   };
 
   const prepareAccounts = (mnemonics: string[]) => {
