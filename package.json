@@ -13,24 +13,24 @@
   },
   "devDependencies": {
     "bun-types": "latest",
-    "@polkadot/typegen": "^10.12.6"
+    "@polkadot/typegen": "^11.0.3"
   },
   "peerDependencies": {
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "@helia/strings": "^2.0.1",
     "@helia/unixfs": "^3.0.3",
     "@ipld/dag-json": "^10.2.0",
     "@multiformats/blake2": "^2.0.2",
-    "@polkadot/api": "^10.12.6",
-    "@polkadot/api-augment": "^10.12.6",
-    "@polkadot/api-contract": "^10.12.6",
+    "@polkadot/api": "^11.0.3",
+    "@polkadot/api-augment": "^11.0.3",
+    "@polkadot/api-contract": "^11.0.3",
     "@polkadot/keyring": "^12.6.2",
-    "@polkadot/types": "^10.12.6",
+    "@polkadot/types": "^11.0.3",
     "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
-    "@scio-labs/use-inkathon": "^0.9.0",
+    "@scio-labs/use-inkathon": "^0.10.0",
     "blockstore-core": "^4.4.1",
     "cac": "^6.7.14",
     "cids": "^1.1.9",
