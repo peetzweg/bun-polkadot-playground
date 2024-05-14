@@ -1,17 +1,13 @@
 import { getApi } from "../apis";
 
 import { Keyring } from "@polkadot/keyring";
-import { resolveOn, resolveOnInBlock } from "../utils/resolveOn";
 import { notEmpty } from "../utils/notEmpty";
-import { BN } from "@polkadot/util";
 
 export const refresh = async () => {
   const People = await getApi("People");
 
   const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
   const alice = keyring.createFromUri("//Alice");
-
-  const decimals = People.registry.chainDecimals[0];
 
   const [refresh, bake, batchAll] = [
     People.tx.people.refreshRoot,
