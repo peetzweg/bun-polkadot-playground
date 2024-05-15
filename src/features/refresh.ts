@@ -27,19 +27,18 @@ export const refresh = async () => {
     return;
   }
 
-  const pushPersonalIds = personalIds.map((id) =>
-    People.tx.people.pushMember(id)
-  );
-
   console.log("Refreshing...");
   let nonce = (
     await People.rpc.system.accountNextIndex(alice.address)
   ).toNumber();
 
   await refresh().signAndSend(alice, { nonce });
-  nonce++;
-  console.log("Pushing...");
-  await batchAll(pushPersonalIds).signAndSend(alice, { nonce });
+
+  for (const id of personalIds) {
+    nonce++;
+    People.tx.people.pushMember(id).signAndSend(alice, { nonce });
+  }
+
   nonce++;
   console.log("Baking...");
   await bake().signAndSend(alice, { nonce });
