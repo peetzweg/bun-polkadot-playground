@@ -2,13 +2,15 @@ import Keyring from "@polkadot/keyring";
 import cac from "cac";
 import { apply } from "./src/features/apply";
 import { cidForFile } from "./src/features/cid";
+import { cidFromBlake } from "./src/features/cidFromBlake";
 import { refresh } from "./src/features/refresh";
+import { ripe } from "./src/features/ripe";
+import { entropyToProceduralSeed } from "./src/features/seed";
 import { storeEvidence } from "./src/features/store";
 import { sudoXcm } from "./src/features/sudoxcm";
 
 const cli = cac("pop");
 
-// apply
 cli
   .command(
     "apply <amount>",
@@ -21,14 +23,18 @@ cli
     await apply(Number(amount));
   });
 
-// cid
 cli
   .command("cid <file_path>", "returns the CID of given file")
   .action(async (filePath) => {
     await cidForFile(filePath);
   });
 
-// sudoxcm
+cli
+  .command("cidFromBlake <hash>", "returns the CID of given blake2 hash")
+  .action(async (hash) => {
+    await cidFromBlake(hash);
+  });
+
 cli
   .command(
     "sudoxcm <encoded_call>",
@@ -38,7 +44,6 @@ cli
     await sudoXcm(encodedCall);
   });
 
-// refresh
 cli
   .command(
     "refresh",
@@ -48,7 +53,12 @@ cli
     await refresh();
   });
 
-// store
+cli
+  .command("ripe", "close all ripe cases if available")
+  .action(async (encodedCall) => {
+    await ripe();
+  });
+
 cli
   .command(
     "store <file_path> <mnemonic>",
@@ -61,7 +71,6 @@ cli
     await storeEvidence(filePath, account);
   });
 
-// Setup help
 cli.help();
 
 try {

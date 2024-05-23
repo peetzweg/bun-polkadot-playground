@@ -9,5 +9,4 @@ const wsProvider = new WsProvider(`wss://${RPC}`, undefined, undefined, 240000);
 
 export const api = await ApiPromise.create({
   provider: wsProvider,
-  rpc: {},
 });

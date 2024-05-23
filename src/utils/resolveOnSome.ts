@@ -1,7 +1,14 @@
 import { QueryableStorageEntry } from "@polkadot/api/types";
 
+type Options = {
+  tries?: number;
+  timeout?: number;
+};
 export const resolveOnSome =
-  <TQueryFn extends QueryableStorageEntry<"promise">>(queryFn: TQueryFn) =>
+  <TQueryFn extends QueryableStorageEntry<"promise">>(
+    queryFn: TQueryFn,
+    options?: Options
+  ) =>
   // (parameters: Parameters<TQueryFn>) => // not sure why this is not working as expected
   (parameters: any[]) =>
     new Promise<void>((resolve, reject) => {
@@ -11,13 +18,12 @@ export const resolveOnSome =
         queryFn(...parameters)
           .then((result) => {
             console.log("try:", tries);
-            if (tries > 5) reject("Too many tries");
-            console.log({ result });
+            if (tries > (options?.tries ?? 5)) reject("Too many tries");
+            console.log("result", !!result);
             if (result.isEmpty) {
               tries++;
-              setTimeout(query, 10000);
+              setTimeout(query, options?.timeout ?? 10000);
             } else {
-              console.log(result.toHuman());
               resolve();
             }
           })

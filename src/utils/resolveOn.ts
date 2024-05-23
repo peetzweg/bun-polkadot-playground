@@ -81,6 +81,11 @@ export const resolveContractTxOn =
           }
 
           if (status.type === state) {
+            if (state === "InBlock") {
+              console.info(
+                `https://polkadot.js.org/apps/?rpc=wss://pop-testnet.parity-lab.parity.io:443/9910#/explorer/query/${status.asInBlock.toHex()}`
+              );
+            }
             resolve();
           }
         }
