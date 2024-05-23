@@ -5,7 +5,6 @@ import { cidForFile } from "./src/features/cid";
 import { cidFromBlake } from "./src/features/cidFromBlake";
 import { refresh } from "./src/features/refresh";
 import { ripe } from "./src/features/ripe";
-import { entropyToProceduralSeed } from "./src/features/seed";
 import { storeEvidence } from "./src/features/store";
 import { sudoXcm } from "./src/features/sudoxcm";
 
