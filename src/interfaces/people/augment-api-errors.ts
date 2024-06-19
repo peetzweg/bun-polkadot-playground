@@ -295,6 +295,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       DispatchError: AugmentedError<ApiType>;
       /**
+       * Payout of the mob credit reward failed.
+       **/
+      NoReward: AugmentedError<ApiType>;
+      /**
        * The case does not exist.
        **/
       NoSuchCase: AugmentedError<ApiType>;
@@ -692,6 +696,10 @@ declare module '@polkadot/api-base/types/errors' {
        * The account is not authorized to do this.
        **/
       NotAuthorized: AugmentedError<ApiType>;
+      /**
+       * Person has not provided a referral ticket.
+       **/
+      NoTicket: AugmentedError<ApiType>;
       /**
        * The personal identity doesn't exist.
        **/

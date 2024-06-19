@@ -217,6 +217,10 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     mobRule: {
       /**
+       * See [`Pallet::claim_votes`].
+       **/
+      claimVotes: AugmentedSubmittable<(caseIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
        * See [`Pallet::clean_vote`].
        **/
       cleanVote: AugmentedSubmittable<(caseIndex: u32 | AnyNumber | Uint8Array, voter: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, U8aFixed]>;
@@ -228,6 +232,10 @@ declare module '@polkadot/api-base/types/submittable' {
        * See [`Pallet::intervene`].
        **/
       intervene: AugmentedSubmittable<(caseIndex: u32 | AnyNumber | Uint8Array, verdict: FrameSupportRealityJudgement | { Truth: any } | { Contempt: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, FrameSupportRealityJudgement]>;
+      /**
+       * See [`Pallet::payout_rewards`].
+       **/
+      payoutRewards: AugmentedSubmittable<(dest: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
        * See [`Pallet::reap_case`].
        **/
@@ -393,7 +401,7 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * See [`Pallet::add_design_family`].
        **/
-      addDesignFamily: AugmentedSubmittable<(index: u16 | AnyNumber | Uint8Array, kind: PalletProofOfInkFamilyKind | { Designed: any } | { ProceduralAccount: any } | { ProceduralPersonal: any } | { Procedural: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, PalletProofOfInkFamilyKind]>;
+      addDesignFamily: AugmentedSubmittable<(index: u16 | AnyNumber | Uint8Array, kind: PalletProofOfInkFamilyKind | { Designed: any } | { ProceduralAccount: any } | { ProceduralPersonal: any } | { Procedural: any } | string | Uint8Array, id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, PalletProofOfInkFamilyKind, U8aFixed]>;
       /**
        * See [`Pallet::allocate_full`].
        **/
@@ -405,7 +413,11 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * See [`Pallet::apply_with_signature`].
        **/
-      applyWithSignature: AugmentedSubmittable<(referrer: u64 | AnyNumber | Uint8Array, signature: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, U8aFixed]>;
+      applyWithSignature: AugmentedSubmittable<(referrer: u64 | AnyNumber | Uint8Array, signature: SpRuntimeMultiSignature | { Ed25519: any } | { Sr25519: any } | { Ecdsa: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, SpRuntimeMultiSignature]>;
+      /**
+       * See [`Pallet::cancel_referral_ticket`].
+       **/
+      cancelReferralTicket: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
        * See [`Pallet::commit`].
        **/
@@ -434,6 +446,14 @@ declare module '@polkadot/api-base/types/submittable' {
        * See [`Pallet::reroll`].
        **/
       reroll: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * See [`Pallet::set_configuration`].
+       **/
+      setConfiguration: AugmentedSubmittable<(config: PalletProofOfInkConfigRecord | { rerollTimeout?: any; fasttrackCount?: any; maximum?: any; fullAllocLen?: any; fullAllocCount?: any; initAllocLen?: any; initAllocCount?: any; timeout?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletProofOfInkConfigRecord]>;
+      /**
+       * See [`Pallet::set_referral_ticket`].
+       **/
+      setReferralTicket: AugmentedSubmittable<(ticket: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
        * See [`Pallet::submit_evidence`].
        **/

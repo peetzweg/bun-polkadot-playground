@@ -489,7 +489,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The committed designs which are no longer available.
        **/
-      committedDesigns: AugmentedQuery<ApiType, (arg: ITuple<[u16, u16]> | [u16 | AnyNumber | Uint8Array, u16 | AnyNumber | Uint8Array]) => Observable<Option<PalletProofOfInkDesignStatus>>, [ITuple<[u16, u16]>]> & QueryableStorageEntry<ApiType, [ITuple<[u16, u16]>]>;
+      committedDesigns: AugmentedQuery<ApiType, (arg1: u16 | AnyNumber | Uint8Array, arg2: u16 | AnyNumber | Uint8Array) => Observable<Option<PalletProofOfInkDesignStatus>>, [u16, u16]> & QueryableStorageEntry<ApiType, [u16, u16]>;
       /**
        * The configuration.
        **/
@@ -497,7 +497,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The current design families we recognise.
        **/
-      designFamilies: AugmentedQuery<ApiType, (arg: u16 | AnyNumber | Uint8Array) => Observable<Option<PalletProofOfInkFamilyKind>>, [u16]> & QueryableStorageEntry<ApiType, [u16]>;
+      designFamilies: AugmentedQuery<ApiType, (arg: u16 | AnyNumber | Uint8Array) => Observable<Option<PalletProofOfInkFamily>>, [u16]> & QueryableStorageEntry<ApiType, [u16]>;
       /**
        * The next free personal ID.
        **/
@@ -507,6 +507,10 @@ declare module '@polkadot/api-base/types/storage' {
        * are in here.
        **/
       people: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<PalletProofOfInkPerson>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
+      /**
+       * The tickets stored on chain ready to be used to refer candidates.
+       **/
+      referralTickets: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<AccountId32>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
       /**
        * Candidates' reserved identities which we track.
        **/
