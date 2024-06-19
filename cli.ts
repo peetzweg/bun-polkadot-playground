@@ -1,7 +1,7 @@
 import Keyring from "@polkadot/keyring";
 import cac from "cac";
 import { apply } from "./src/features/apply";
-import { asPersonalAlias } from "./src/features/asPersonalAlias";
+import { asPersonalIdentity } from "./src/features/asPersonalIdentity";
 import { blake2ForFile } from "./src/features/blake2";
 import { cidForFile } from "./src/features/cid";
 import { cidFromBlake } from "./src/features/cidFromBlake";
@@ -42,7 +42,7 @@ cli
     "submit call as personal alias"
   )
   .action(async (call, mnemonic) => {
-    await asPersonalAlias(mnemonic.join(" "), call);
+    await asPersonalIdentity(mnemonic.join(" "), call);
   });
 
 cli
