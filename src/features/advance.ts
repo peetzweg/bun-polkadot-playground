@@ -38,13 +38,14 @@ export const advance = async () => {
   ].map((fn) => resolveOnInBlock(fn));
 
   const advanceAccount = async (applicant: KeyringPair, member: Uint8Array) => {
+    const accountId = People.createType(
+      "AccountId",
+      applicant.address
+    ).toHuman();
     // Check if the account is already a person
     const personalIdOption = await People.query.people.keys(u8aToHex(member));
     if (personalIdOption.isSome) {
-      console.log(
-        applicant.address,
-        `already a person: ${personalIdOption.unwrap()}`
-      );
+      console.log(accountId, `already a person: ${personalIdOption.unwrap()}`);
       return;
     }
 
@@ -57,7 +58,7 @@ export const advance = async () => {
         [applicant.address, Number(0.0105) * 10 ** decimals],
         alice
       );
-      console.log(applicant.address, "funded");
+      console.log(accountId, "funded");
       await advanceAccount(applicant, member);
       return;
     }
@@ -67,11 +68,11 @@ export const advance = async () => {
     );
 
     if (candidacyOption.isNone) {
-      console.log(applicant.address, "Not a candidate yet");
+      console.log(accountId, "Not a candidate yet");
       await apply([], applicant);
-      console.log(applicant.address, "applied");
+      console.log(accountId, "applied");
       await commit([{ ProceduralAccount: 8 }, null], applicant);
-      console.log(applicant.address, "committed");
+      console.log(accountId, "committed");
       await advanceAccount(applicant, member);
       return;
     }
@@ -81,7 +82,7 @@ export const advance = async () => {
     if (candidacy.isProven) {
       const encodedMember = People.createType("[u8;33]", member);
       await register([encodedMember.toHex()], applicant);
-      console.log(applicant.address, "registered");
+      console.log(accountId, "registered");
       return;
     }
 
@@ -103,7 +104,7 @@ export const advance = async () => {
         );
         const randomHash = PHOTO_EVIDENCE_HASHES[randomIndex];
         await submitEvidence([randomHash], applicant);
-        console.log(applicant.address, "photo evidence provided");
+        console.log(accountId, "photo evidence provided");
         return;
       }
 
@@ -114,19 +115,19 @@ export const advance = async () => {
         );
         const randomHash = VIDEO_EVIDENCE_HASHES[randomIndex];
         await submitEvidence([randomHash], applicant);
-        console.log(applicant.address, "video evidence provided");
+        console.log(accountId, "video evidence provided");
         return;
       }
 
       // Request more Storage
       if (candidacy.asSelected.allocation.isInitDone) {
         await allocateFull([], applicant);
-        console.log(applicant.address, "allocate full");
+        console.log(accountId, "allocate full");
         return;
       }
     }
 
-    console.log(applicant.address, "no action taken");
+    console.log(accountId, "no action taken");
   };
 
   await initVerifiable();
