@@ -52,8 +52,9 @@ cli
   });
 cli
   .command("cid <file_path>", "returns the CID of given file")
-  .action(async (filePath) => {
-    await cidForFile(filePath);
+  .option("--codec [codec]", "Codec to use in the CID, default is 'raw'")
+  .action(async (filePath, options) => {
+    await cidForFile(filePath, options?.codec);
   });
 
 cli
