@@ -1,11 +1,16 @@
 import { u8aToHex } from "@polkadot/util";
 import { blake2AsU8a } from "@polkadot/util-crypto";
-import CID from "cids";
-import Multihashes from "multihashes";
 
-import { CID as CIDNew } from "multiformats/cid";
-import * as raw from "multiformats/codecs/raw";
+import { create as createMultihashDigest } from "multiformats/hashes/digest";
+import { CID } from "multiformats/cid";
+import { code as JSON_CODEC } from "multiformats/codecs/json";
+import { code as RAW_CODEC } from "multiformats/codecs/raw";
 
+const CODECS: Record<string, number> = {
+  json: JSON_CODEC,
+  raw: RAW_CODEC,
+  "dag-pb": 0x70,
+};
 
 export const cidForFile = async (filePath: string, codec = "raw") => {
   const arrayBuffer = await Bun.file(filePath).arrayBuffer();
@@ -17,13 +22,13 @@ export const cidForFile = async (filePath: string, codec = "raw") => {
   // For reference
   // const hashFromMultiformats = (await blake2b256.digest(byteArray)).digest;
 
-  const multihash = Multihashes.encode(hashPolkadotJS, "blake2b-256");
+  if (CODECS[codec] === undefined) throw `Unsupported codec: '${codec}'`;
 
-  const cid = new CID(1, codec, multihash);
-  const cidNew = CIDNew.create(1, raw.code, multihash);
+  const multihashDigest = createMultihashDigest(45600, hashPolkadotJS);
+  const cid = CID.create(1, CODECS[codec], multihashDigest);
   console.log({
     file: filePath,
-    multihash: u8aToHex(multihash),
+    multihash: u8aToHex(multihashDigest.bytes),
     blake2b256: u8aToHex(hashPolkadotJS),
     hashFn: "blake2b-256",
     codec,
