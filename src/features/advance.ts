@@ -71,7 +71,7 @@ export const advance = async () => {
       console.log(accountId, "Not a candidate yet");
       await apply([], applicant);
       console.log(accountId, "applied");
-      await commit([{ ProceduralAccount: 8 }, null], applicant);
+      await commit([{ ProceduralAccount: 9 }, null], applicant);
       console.log(accountId, "committed");
       await advanceAccount(applicant, member);
       return;
