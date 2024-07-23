@@ -31,9 +31,12 @@ cli
   });
 
 cli
-  .command("advance", "advance candidacy of all already created accounts")
-  .action(async () => {
-    await advance();
+  .command(
+    "advance [...accounts]",
+    "advance candidacy of all already created accounts"
+  )
+  .action(async (accounts) => {
+    await advance(accounts as string[]);
   });
 
 cli
@@ -51,10 +54,12 @@ cli
     await blake2ForFile(filePath);
   });
 cli
-  .command("cid <file_path>", "returns the CID of given file")
+  .command("cid [...files]", "returns the CID of given file")
   .option("--codec [codec]", "Codec to use in the CID, default is 'raw'")
-  .action(async (filePath, options) => {
-    await cidForFile(filePath, options?.codec);
+  .action(async (files, options) => {
+    for await (const file of files) {
+      await cidForFile(file, options?.codec);
+    }
   });
 
 cli
