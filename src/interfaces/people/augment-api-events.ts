@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H256 } from '@polkadot/types/interfaces/runtime';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
@@ -183,10 +183,22 @@ declare module '@polkadot/api-base/types/events' {
        **/
       AuthorityRemoved: AugmentedEvent<ApiType, [authority: AccountId32], { authority: AccountId32 }>;
       /**
+       * A credential was accepted for a person.
+       **/
+      CredentialAccepted: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
+      /**
+       * A credential was rejected for a person.
+       **/
+      CredentialRejected: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
+      /**
        * A dangling username (as in, a username corresponding to an account that has removed its
        * identity) has been removed.
        **/
       DanglingUsernameRemoved: AugmentedEvent<ApiType, [who: AccountId32, username: Bytes], { who: AccountId32, username: Bytes }>;
+      /**
+       * Evidence for a credential has beed submitted by a person.
+       **/
+      EvidenceSubmitted: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
       /**
        * A name was cleared, and the given balance returned.
        **/
@@ -211,6 +223,14 @@ declare module '@polkadot/api-base/types/events' {
        * A judgement request was retracted.
        **/
       JudgementUnrequested: AugmentedEvent<ApiType, [who: AccountId32, registrarIndex: u32], { who: AccountId32, registrarIndex: u32 }>;
+      /**
+       * An identity for a person has been set.
+       **/
+      PersonalIdentitySet: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
+      /**
+       * Person was banned for sending contemptuous evidence.
+       **/
+      PersonBanned: AugmentedEvent<ApiType, [id: u64], { id: u64 }>;
       /**
        * A queued username passed its expiration without being claimed and was removed.
        **/
@@ -500,7 +520,81 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    privacyVoucher: {
+      /**
+       * An individual has created a voucher.
+       **/
+      KeyAdded: AugmentedEvent<ApiType, [key: VerifiableRingVrfImplEncodedPublicKey], { key: VerifiableRingVrfImplEncodedPublicKey }>;
+      /**
+       * An individual claimed a voucher.
+       **/
+      VoucherClaimed: AugmentedEvent<ApiType, [who: AccountId32, alias: U8aFixed], { who: AccountId32, alias: U8aFixed }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     proofOfInk: {
+      /**
+       * Candidate applied for verification.
+       **/
+      CandidateApplied: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      /**
+       * Person referred an account.
+       **/
+      CandidateReferred: AugmentedEvent<ApiType, [referrer: u64, referred: AccountId32], { referrer: u64, referred: AccountId32 }>;
+      /**
+       * Candidate committed to an ink design.
+       **/
+      DesignCommitted: AugmentedEvent<ApiType, [accountId: AccountId32, reservedId: u64], { accountId: AccountId32, reservedId: u64 }>;
+      /**
+       * Design family added.
+       **/
+      FamilyAdded: AugmentedEvent<ApiType, [index: u16, kind: PalletProofOfInkFamilyKind, id: U8aFixed], { index: u16, kind: PalletProofOfInkFamilyKind, id: U8aFixed }>;
+      /**
+       * Uncommitted candidate removed.
+       **/
+      FlakedOut: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      /**
+       * Storage fully allocated for a committed design.
+       **/
+      FullyAllocated: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      /**
+       * Oracle has provided the judgement for a judicial case.
+       **/
+      JudgementProvided: AugmentedEvent<ApiType, [accountId: AccountId32, judgement: FrameSupportRealityJudgement], { accountId: AccountId32, judgement: FrameSupportRealityJudgement }>;
+      /**
+       * Candidate opened a judicial case for their verification evidence.
+       **/
+      JudgementRequested: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      /**
+       * Register an account as a person.
+       **/
+      PersonRegistered: AugmentedEvent<ApiType, [accountId: AccountId32, personalId: u64], { accountId: AccountId32, personalId: u64 }>;
+      /**
+       * Candidate applied for verification through a referral.
+       **/
+      ReferralApplied: AugmentedEvent<ApiType, [accountId: AccountId32, referrer: u64], { accountId: AccountId32, referrer: u64 }>;
+      /**
+       * Entropy for a candidate changed after expiry.
+       **/
+      Rerolled: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      /**
+       * Candidate applied using a referral ticket.
+       **/
+      TicketApplied: AugmentedEvent<ApiType, [accountId: AccountId32, referrer: u64], { accountId: AccountId32, referrer: u64 }>;
+      /**
+       * Referral ticket removed by removing the public key from chain storage.
+       **/
+      TicketCancelled: AugmentedEvent<ApiType, [referrer: u64], { referrer: u64 }>;
+      /**
+       * Referral ticket created by storing the public key on chain.
+       **/
+      TicketReferred: AugmentedEvent<ApiType, [referrer: u64], { referrer: u64 }>;
+      /**
+       * Candidate removed after timeout.
+       **/
+      TimedOut: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
       /**
        * Generic event
        **/
@@ -512,6 +606,16 @@ declare module '@polkadot/api-base/types/events' {
        * block number as the type might suggest.
        **/
       NewSession: AugmentedEvent<ApiType, [sessionIndex: u32], { sessionIndex: u32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    skipFeelessPayment: {
+      /**
+       * A transaction fee was skipped.
+       **/
+      FeeSkipped: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
       /**
        * Generic event
        **/

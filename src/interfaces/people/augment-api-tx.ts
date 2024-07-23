@@ -123,9 +123,13 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       killIdentity: AugmentedSubmittable<(target: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress]>;
       /**
+       * See [`Pallet::personal_credential_judged`].
+       **/
+      personalCredentialJudged: AugmentedSubmittable<(ticket: u32 | AnyNumber | Uint8Array, context: Bytes | string | Uint8Array, judgement: FrameSupportRealityJudgement | { Truth: any } | { Contempt: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes, FrameSupportRealityJudgement]>;
+      /**
        * See [`Pallet::provide_judgement`].
        **/
-      provideJudgement: AugmentedSubmittable<(regIndex: Compact<u32> | AnyNumber | Uint8Array, target: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, judgement: PalletIdentityJudgement | { Unknown: any } | { FeePaid: any } | { Reasonable: any } | { KnownGood: any } | { OutOfDate: any } | { LowQuality: any } | { Erroneous: any } | string | Uint8Array, identity: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, MultiAddress, PalletIdentityJudgement, H256]>;
+      provideJudgement: AugmentedSubmittable<(regIndex: Compact<u32> | AnyNumber | Uint8Array, target: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, judgement: PalletIdentityJudgement | { Unknown: any } | { FeePaid: any } | { Reasonable: any } | { KnownGood: any } | { OutOfDate: any } | { LowQuality: any } | { Erroneous: any } | { External: any } | string | Uint8Array, identity: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, MultiAddress, PalletIdentityJudgement, H256]>;
       /**
        * See [`Pallet::quit_sub`].
        **/
@@ -171,6 +175,10 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       setIdentity: AugmentedSubmittable<(info: PeopleRococoRuntimePeopleIdentityInfo | { display?: any; legal?: any; web?: any; matrix?: any; email?: any; pgpFingerprint?: any; image?: any; twitter?: any; github?: any; discord?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PeopleRococoRuntimePeopleIdentityInfo]>;
       /**
+       * See [`Pallet::set_person_identity`].
+       **/
+      setPersonIdentity: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
+      /**
        * See [`Pallet::set_primary_username`].
        **/
       setPrimaryUsername: AugmentedSubmittable<(username: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
@@ -182,6 +190,10 @@ declare module '@polkadot/api-base/types/submittable' {
        * See [`Pallet::set_username_for`].
        **/
       setUsernameFor: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, username: Bytes | string | Uint8Array, signature: Option<SpRuntimeMultiSignature> | null | Uint8Array | SpRuntimeMultiSignature | { Ed25519: any } | { Sr25519: any } | { Ecdsa: any } | string) => SubmittableExtrinsic<ApiType>, [MultiAddress, Bytes, Option<SpRuntimeMultiSignature>]>;
+      /**
+       * See [`Pallet::submit_personal_credential_evidence`].
+       **/
+      submitPersonalCredentialEvidence: AugmentedSubmittable<(credential: FrameSupportRealityIdentitySocial | { Twitter: any } | { Github: any } | { Discord: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [FrameSupportRealityIdentitySocial]>;
       /**
        * Generic tx
        **/
@@ -235,7 +247,7 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * See [`Pallet::payout_rewards`].
        **/
-      payoutRewards: AugmentedSubmittable<(dest: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
+      payoutRewards: AugmentedSubmittable<(voucher: VerifiableRingVrfImplEncodedPublicKey | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [VerifiableRingVrfImplEncodedPublicKey]>;
       /**
        * See [`Pallet::reap_case`].
        **/
@@ -397,6 +409,20 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    privacyVoucher: {
+      /**
+       * See [`Pallet::claim_voucher`].
+       **/
+      claimVoucher: AugmentedSubmittable<(proof: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
+      /**
+       * See [`Pallet::claim_voucher_into_destination`].
+       **/
+      claimVoucherIntoDestination: AugmentedSubmittable<(proof: U8aFixed | string | Uint8Array, dest: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, AccountId32]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     proofOfInk: {
       /**
        * See [`Pallet::add_design_family`].
@@ -430,14 +456,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * See [`Pallet::judged`].
        **/
       judged: AugmentedSubmittable<(ticket: u32 | AnyNumber | Uint8Array, context: Bytes | string | Uint8Array, judgement: FrameSupportRealityJudgement | { Truth: any } | { Contempt: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes, FrameSupportRealityJudgement]>;
-      /**
-       * See [`Pallet::refer`].
-       **/
-      refer: AugmentedSubmittable<(target: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
-      /**
-       * See [`Pallet::referred_apply`].
-       **/
-      referredApply: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
        * See [`Pallet::register`].
        **/

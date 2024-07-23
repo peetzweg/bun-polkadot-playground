@@ -137,6 +137,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AlreadyClaimed: AugmentedError<ApiType>;
       /**
+       * TODO
+       **/
+      BadContext: AugmentedError<ApiType>;
+      /**
+       * TODO
+       **/
+      Banned: AugmentedError<ApiType>;
+      /**
        * Empty index.
        **/
       EmptyIndex: AugmentedError<ApiType>;
@@ -197,6 +205,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFound: AugmentedError<ApiType>;
       /**
+       * TODO
+       **/
+      NotJudging: AugmentedError<ApiType>;
+      /**
        * Account isn't named.
        **/
       NotNamed: AugmentedError<ApiType>;
@@ -208,6 +220,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Sender is not a sub-account.
        **/
       NotSub: AugmentedError<ApiType>;
+      /**
+       * TODO
+       **/
+      NotSupported: AugmentedError<ApiType>;
       /**
        * The sender does not have permission to issue a username.
        **/
@@ -232,6 +248,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Too many subs-accounts.
        **/
       TooManySubAccounts: AugmentedError<ApiType>;
+      /**
+       * TODO
+       **/
+      UnexpectedJudgement: AugmentedError<ApiType>;
       /**
        * The username is already taken.
        **/
@@ -610,6 +630,48 @@ declare module '@polkadot/api-base/types/errors' {
        * The message's weight could not be determined.
        **/
       UnweighableMessage: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    privacyVoucher: {
+      /**
+       * The member was already added to the root.
+       **/
+      AlreadyMember: AugmentedError<ApiType>;
+      /**
+       * The member has already been pushed into this root.
+       **/
+      AlreadyPushed: AugmentedError<ApiType>;
+      /**
+       * Voucher was already claimed.
+       **/
+      AlreadySpent: AugmentedError<ApiType>;
+      /**
+       * The proof is invalid.
+       **/
+      InvalidProof: AugmentedError<ApiType>;
+      /**
+       * The root does not have any members.
+       **/
+      NoMembers: AugmentedError<ApiType>;
+      /**
+       * The given index does not exist.
+       **/
+      NonExistent: AugmentedError<ApiType>;
+      /**
+       * The root does not exist.
+       **/
+      NoRoot: AugmentedError<ApiType>;
+      /**
+       * The reward couldn't be paid out.
+       **/
+      PayoutFailure: AugmentedError<ApiType>;
+      /**
+       * Too many members have been pushed.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

@@ -7,7 +7,7 @@ import '@polkadot/api-base/types/storage';
 
 import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
-import type { BTreeMap, BTreeSet, Bytes, Option, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
+import type { BTreeMap, BTreeSet, Bytes, Null, Option, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256 } from '@polkadot/types/interfaces/runtime';
 import type { Observable } from '@polkadot/types/types';
@@ -183,6 +183,10 @@ declare module '@polkadot/api-base/types/storage' {
        * First tuple item is the account and second is the acceptance deadline.
        **/
       pendingUsernames: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, u32]>>>, [Bytes]> & QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * TODO
+       **/
+      personIdentities: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<PalletIdentityPersonalIdentity>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
       /**
        * The set of registrars. Not expected to get very big as can only be added through a
        * special origin (likely a council motion).
@@ -477,6 +481,43 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
+    privacyVoucher: {
+      /**
+       * Paginated collection of static chunks used by the verifiable crypto.
+       **/
+      chunks: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<Vec<ArkScale>>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForKeys: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * The current vouchers registered.
+       * 
+       * TODO - would need multiple "buckets" for each voucher type, right now all vouchers are
+       * exchanged for a fixed amount `Self::VoucherValue`.
+       **/
+      keys: AugmentedQuery<ApiType, (arg: VerifiableRingVrfImplEncodedPublicKey | string | Uint8Array) => Observable<Option<Null>>, [VerifiableRingVrfImplEncodedPublicKey]> & QueryableStorageEntry<ApiType, [VerifiableRingVrfImplEncodedPublicKey]>;
+      /**
+       * The crypto root of the current member set.
+       **/
+      root: AugmentedQuery<ApiType, () => Observable<Option<U8aFixed>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * The intermediate and key count used to generate the current root.
+       **/
+      rootBuilder: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[U8aFixed, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * The key pages.
+       **/
+      rootKeys: AugmentedQuery<ApiType, (arg: ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array]) => Observable<Vec<VerifiableRingVrfImplEncodedPublicKey>>, [ITuple<[u32, u32]>]> & QueryableStorageEntry<ApiType, [ITuple<[u32, u32]>]>;
+      /**
+       * The alias of all used vouchers to prevent double spend.
+       **/
+      usedTickets: AugmentedQuery<ApiType, (arg: U8aFixed | string | Uint8Array) => Observable<Option<Null>>, [U8aFixed]> & QueryableStorageEntry<ApiType, [U8aFixed]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     proofOfInk: {
       /**
        * The number of judgements currently ongoing.
@@ -555,6 +596,12 @@ declare module '@polkadot/api-base/types/storage' {
        * The current set of validators.
        **/
       validators: AugmentedQuery<ApiType, () => Observable<Vec<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    skipFeelessPayment: {
       /**
        * Generic query
        **/

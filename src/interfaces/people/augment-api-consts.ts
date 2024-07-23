@@ -159,6 +159,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    proofOfInk: {
+      /**
+       * The maximum number of active referrals a user can have open.
+       **/
+      maxActiveReferrals: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     system: {
       /**
        * Maximum number of block number to block hash mappings to keep (oldest pruned first).
