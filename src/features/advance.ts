@@ -3,13 +3,18 @@ import { getApi } from "../apis";
 import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
 import {
+  FrameSupportRealityIdentitySocial,
   FrameSystemAccountInfo,
   PalletIdentityRegistration,
   PalletProofOfInkCandidate,
 } from "@polkadot/types/lookup";
 import { readdir } from "node:fs/promises";
 import { resolveOn } from "../utils/resolveOn";
-import { PHOTO_EVIDENCE_HASHES, VIDEO_EVIDENCE_HASHES } from "./evidence";
+import {
+  PHOTO_EVIDENCE_HASHES,
+  PLATFORM_PROFILES,
+  VIDEO_EVIDENCE_HASHES,
+} from "./evidence";
 
 import { u8aToHex } from "@polkadot/util";
 import { mnemonicToEntropy } from "@polkadot/util-crypto";
@@ -17,8 +22,12 @@ import initVerifiable, {
   member_from_entropy,
   sign,
 } from "../verifiable/verifiable";
+import { pickRandomElement } from "../utils/pickRandomElement";
 
-export const advance = async (accounts: string[] = []) => {
+export const advance = async (
+  accounts: string[] = [],
+  advanceAmount?: number
+) => {
   const People = await getApi("People");
   const decimals = People.registry.chainDecimals[0];
 
@@ -117,10 +126,16 @@ export const advance = async (accounts: string[] = []) => {
         const identity: PalletIdentityRegistration = identityOption.unwrap()[0];
 
         if (identity.judgements.length === 0) {
-          console.log(accountId, `submitting evidence for Twitter`);
+          console.log(accountId, `submitting IdentityCredential`);
+
+          const accountIdCredentials = [
+            { Twitter: { username: accountId } },
+            { GitHub: { username: accountId } },
+          ];
+
           const credential = People.createType(
             "FrameSupportRealityIdentitySocial",
-            { Twitter: { username: applicant.address.slice(0, 10) } }
+            pickRandomElement([PLATFORM_PROFILES, ...accountIdCredentials])
           );
 
           const submitPersonalCredentialEvidence =
@@ -198,10 +213,8 @@ export const advance = async (accounts: string[] = []) => {
 
       // Submit Photo Evidence
       if (candidacy.asSelected.allocation.isInitial) {
-        const randomIndex = Math.floor(
-          Math.random() * PHOTO_EVIDENCE_HASHES.length
-        );
-        const randomHash = PHOTO_EVIDENCE_HASHES[randomIndex];
+        const randomHash = pickRandomElement(PHOTO_EVIDENCE_HASHES);
+
         await submitEvidence([randomHash], applicant);
         console.log(accountId, "photo evidence provided");
         return true;
@@ -209,10 +222,8 @@ export const advance = async (accounts: string[] = []) => {
 
       // Submit Video Evidence
       if (candidacy.asSelected.allocation.isFull) {
-        const randomIndex = Math.floor(
-          Math.random() * VIDEO_EVIDENCE_HASHES.length
-        );
-        const randomHash = VIDEO_EVIDENCE_HASHES[randomIndex];
+        const randomHash = pickRandomElement(VIDEO_EVIDENCE_HASHES);
+
         await submitEvidence([randomHash], applicant);
         console.log(accountId, "video evidence provided");
         return true;
@@ -253,9 +264,20 @@ export const advance = async (accounts: string[] = []) => {
     );
   }
 
+  let advancedCount = 0;
   for await (const [applicant, entropy] of applicants) {
     try {
-      await advanceAccount(applicant, entropy);
+      const isAdvanced = await advanceAccount(applicant, entropy);
+      if (isAdvanced) {
+        advancedCount++;
+
+        if (advanceAmount && advancedCount >= advanceAmount) {
+          console.log(
+            `Advanced the specified amount (${advanceAmount}) of accounts`
+          );
+          return;
+        }
+      }
     } catch (error: unknown) {
       console.log(applicant.address, "An Error Occurred");
       if (error instanceof Error) {

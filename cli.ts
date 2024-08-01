@@ -11,6 +11,7 @@ import { storeEvidence } from "./src/features/store";
 import { sudoXcm } from "./src/features/sudoxcm";
 import { advance } from "./src/features/advance";
 import { newAccounts } from "./src/features/new";
+import { hexToU8a, u8aToHex } from "@polkadot/util";
 
 const cli = cac("pop");
 
@@ -35,8 +36,19 @@ cli
     "advance [...accounts]",
     "advance candidacy of all already created accounts"
   )
-  .action(async (accounts) => {
-    await advance(accounts as string[]);
+  .option(
+    "--amount <amount>",
+    "amount of account to advance, if not specified advances all"
+  )
+  .action(async (accounts, option) => {
+    await advance(accounts as string[], Number(option.amount));
+  });
+
+cli
+  .command("u8a <hex>", "Convert given hex string into Uint8Array")
+  .action(async (hex) => {
+    console.log({ hex });
+    console.log(hexToU8a(hex));
   });
 
 cli

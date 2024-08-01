@@ -17,6 +17,7 @@ export const VIDEO_EVIDENCE_HASHES = [
   "0x0cd3a3b92354fb6ba08daa42e8b7306f7a1e18b1477abe525dc01b135db2525c",
   "0x4121d7e0d2bdd2f7eb8b1c41d3ab49f1d212cab7ad89887061b70ecef25fabbe",
   "0x961b8e9990d23f9673dbf42760de3980f6eb8371f4b8247813e5208f81f6311a",
+  "0x38fcb720fdb6c2bd01bd33a36910add5b75b913c59515c7265a304607091f256",
 ];
 
 export const PHOTO_EVIDENCE_HASHES = [
@@ -38,4 +39,13 @@ export const PHOTO_EVIDENCE_HASHES = [
   "0xd49d6760a5b8327f224c64404be27b0798495213c765f30eff0a6a05d0d30df7",
   "0x9eceb302937c382b694a60c2b4047b92050bf53400e44fc74dc52e420e8dabf3",
   "0x8559b06ffe2d3dd0871f16cf4902779ecf53057ba9914620a6194d75173c892c",
+];
+
+export const PLATFORM_PROFILES = [
+  { Twitter: { username: "gavofyork" } },
+  { Twitter: { username: "AntonTheDay7" } },
+  { GitHub: { username: "peetzweg" } },
+  { GitHub: { username: "valentunn" } },
+  { GitHub: { username: "ERussel" } },
+  { GitHub: { username: "georgepisaltu" } },
 ];
