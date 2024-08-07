@@ -18,6 +18,8 @@ export const VIDEO_EVIDENCE_HASHES = [
   "0x4121d7e0d2bdd2f7eb8b1c41d3ab49f1d212cab7ad89887061b70ecef25fabbe",
   "0x961b8e9990d23f9673dbf42760de3980f6eb8371f4b8247813e5208f81f6311a",
   "0x38fcb720fdb6c2bd01bd33a36910add5b75b913c59515c7265a304607091f256",
+  "0xe4e2b541e0d65f5162c1550c12d63ed76fa13a64ccdde6c9cd73b260b1127a8b",
+  "0x60f3df8d1b59a3c281dcd12f1b905d70fe7558f55b6f2b6d4eb9b8674fdab8ba",
 ];
 
 export const PHOTO_EVIDENCE_HASHES = [
@@ -39,6 +41,10 @@ export const PHOTO_EVIDENCE_HASHES = [
   "0xd49d6760a5b8327f224c64404be27b0798495213c765f30eff0a6a05d0d30df7",
   "0x9eceb302937c382b694a60c2b4047b92050bf53400e44fc74dc52e420e8dabf3",
   "0x8559b06ffe2d3dd0871f16cf4902779ecf53057ba9914620a6194d75173c892c",
+  "0xd8e20773b831892a707f1f42b990edb8bf7e75ed843b4f9406751ccfa31c8cda",
+  "0xdf4d81b1be64ca6aef3ee21bd908f142e44fb5df32f54c2b21c8954eff33cf93",
+  "0xf193a541b0841bc353fbedf07d61c1c26abc4d3030a5188aa6cd82f287910e86",
+  "0xbd0f4011bae8e2ddb015a57a229bbb520a951489608f3b656771c28b6b7d3d3a",
 ];
 
 export const PLATFORM_PROFILES = [
@@ -48,4 +54,9 @@ export const PLATFORM_PROFILES = [
   { GitHub: { username: "valentunn" } },
   { GitHub: { username: "ERussel" } },
   { GitHub: { username: "georgepisaltu" } },
+];
+
+export const TATTOO_OPTIONS = [
+  { ProceduralPersonal: 11 },
+  { ProceduralAccount: 10 },
 ];

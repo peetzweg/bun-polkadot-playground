@@ -3,7 +3,6 @@ import { getApi } from "../apis";
 import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
 import {
-  FrameSupportRealityIdentitySocial,
   FrameSystemAccountInfo,
   PalletIdentityRegistration,
   PalletProofOfInkCandidate,
@@ -13,16 +12,17 @@ import { resolveOn } from "../utils/resolveOn";
 import {
   PHOTO_EVIDENCE_HASHES,
   PLATFORM_PROFILES,
+  TATTOO_OPTIONS,
   VIDEO_EVIDENCE_HASHES,
 } from "./evidence";
 
 import { u8aToHex } from "@polkadot/util";
 import { mnemonicToEntropy } from "@polkadot/util-crypto";
+import { pickRandomElement } from "../utils/pickRandomElement";
 import initVerifiable, {
   member_from_entropy,
   sign,
 } from "../verifiable/verifiable";
-import { pickRandomElement } from "../utils/pickRandomElement";
 
 export const advance = async (
   accounts: string[] = [],
@@ -125,8 +125,10 @@ export const advance = async (
           );
         const identity: PalletIdentityRegistration = identityOption.unwrap()[0];
 
+        console.log({ identity: identity.toHuman() });
         if (identity.judgements.length === 0) {
           console.log(accountId, `submitting IdentityCredential`);
+          return;
 
           const accountIdCredentials = [
             { Twitter: { username: accountId } },
@@ -179,7 +181,9 @@ export const advance = async (
       console.log(accountId, "Not a candidate yet");
       await apply([], applicant);
       console.log(accountId, "applied");
-      await commit([{ ProceduralPersonal: 11 }, null], applicant);
+      const tattooChoice = pickRandomElement(TATTOO_OPTIONS);
+      await commit([tattooChoice, null], applicant);
+
       console.log(accountId, "committed");
       await advanceAccount(applicant, member);
       return true;
