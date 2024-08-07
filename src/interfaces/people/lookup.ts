@@ -2759,11 +2759,14 @@ export default {
         caseIndex: 'u32',
         verdict: 'FrameSupportRealityJudgement',
       },
-      claim_votes: {
+      claim_vote: {
         caseIndex: 'u32',
       },
       payout_rewards: {
-        voucher: 'VerifiableRingVrfImplEncodedPublicKey'
+        voucher: 'VerifiableRingVrfImplEncodedPublicKey',
+      },
+      claim_votes: {
+        caseIndices: 'Vec<u32>'
       }
     }
   },
@@ -3187,7 +3190,7 @@ export default {
    * Lookup377: pallet_mob_rule::pallet::Error<T>
    **/
   PalletMobRuleError: {
-    _enum: ['NoSuchCase', 'NoSuchVote', 'NotOpen', 'NotRipe', 'NotDone', 'CodecError', 'DispatchError', 'Recent', 'NoReward']
+    _enum: ['NoSuchCase', 'NoSuchVote', 'NotOpen', 'NotRipe', 'NotDone', 'CodecError', 'DispatchError', 'Recent', 'NoReward', 'TooManyClaims']
   },
   /**
    * Lookup378: pallet_proof_of_ink::pallet::Candidate<JudgementId, frame_support::traits::tokens::fungible::HoldConsideration<A, F, R, D>, BlockNumber>

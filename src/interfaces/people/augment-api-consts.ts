@@ -126,6 +126,10 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxCaseDuration: u32 & AugmentedConst<ApiType>;
       /**
+       * The maximum number of votes claimable in a single extrinsic.
+       **/
+      maxVotesClaimable: u32 & AugmentedConst<ApiType>;
+      /**
        * The number of hours a case must stay open for voting before it can be closed.
        **/
       minCaseDuration: u32 & AugmentedConst<ApiType>;

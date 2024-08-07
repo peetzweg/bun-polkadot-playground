@@ -496,7 +496,7 @@ declare module '@polkadot/api-base/types/storage' {
        * TODO - would need multiple "buckets" for each voucher type, right now all vouchers are
        * exchanged for a fixed amount `Self::VoucherValue`.
        **/
-      keys: AugmentedQuery<ApiType, (arg: VerifiableRingVrfImplEncodedPublicKey | string | Uint8Array) => Observable<Option<Null>>, [VerifiableRingVrfImplEncodedPublicKey]> & QueryableStorageEntry<ApiType, [VerifiableRingVrfImplEncodedPublicKey]>;
+      keys: AugmentedQuery<ApiType, (arg: VerifiableRingVrfImplEncodedPublicKey | string | Uint8Array) => Observable<Option<u32>>, [VerifiableRingVrfImplEncodedPublicKey]> & QueryableStorageEntry<ApiType, [VerifiableRingVrfImplEncodedPublicKey]>;
       /**
        * The crypto root of the current member set.
        **/
@@ -505,10 +505,6 @@ declare module '@polkadot/api-base/types/storage' {
        * The intermediate and key count used to generate the current root.
        **/
       rootBuilder: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[U8aFixed, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * The key pages.
-       **/
-      rootKeys: AugmentedQuery<ApiType, (arg: ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array]) => Observable<Vec<VerifiableRingVrfImplEncodedPublicKey>>, [ITuple<[u32, u32]>]> & QueryableStorageEntry<ApiType, [ITuple<[u32, u32]>]>;
       /**
        * The alias of all used vouchers to prevent double spend.
        **/

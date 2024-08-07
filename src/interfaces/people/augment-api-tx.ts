@@ -229,9 +229,13 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     mobRule: {
       /**
+       * See [`Pallet::claim_vote`].
+       **/
+      claimVote: AugmentedSubmittable<(caseIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
        * See [`Pallet::claim_votes`].
        **/
-      claimVotes: AugmentedSubmittable<(caseIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      claimVotes: AugmentedSubmittable<(caseIndices: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<u32>]>;
       /**
        * See [`Pallet::clean_vote`].
        **/

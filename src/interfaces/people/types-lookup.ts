@@ -2860,15 +2860,19 @@ declare module '@polkadot/types/lookup' {
       readonly caseIndex: u32;
       readonly verdict: FrameSupportRealityJudgement;
     } & Struct;
-    readonly isClaimVotes: boolean;
-    readonly asClaimVotes: {
+    readonly isClaimVote: boolean;
+    readonly asClaimVote: {
       readonly caseIndex: u32;
     } & Struct;
     readonly isPayoutRewards: boolean;
     readonly asPayoutRewards: {
       readonly voucher: VerifiableRingVrfImplEncodedPublicKey;
     } & Struct;
-    readonly type: 'Vote' | 'CloseCase' | 'CleanVote' | 'ReapCase' | 'Intervene' | 'ClaimVotes' | 'PayoutRewards';
+    readonly isClaimVotes: boolean;
+    readonly asClaimVotes: {
+      readonly caseIndices: Vec<u32>;
+    } & Struct;
+    readonly type: 'Vote' | 'CloseCase' | 'CleanVote' | 'ReapCase' | 'Intervene' | 'ClaimVote' | 'PayoutRewards' | 'ClaimVotes';
   }
 
   /** @name PalletProofOfInkCall (319) */
@@ -3272,7 +3276,8 @@ declare module '@polkadot/types/lookup' {
     readonly isDispatchError: boolean;
     readonly isRecent: boolean;
     readonly isNoReward: boolean;
-    readonly type: 'NoSuchCase' | 'NoSuchVote' | 'NotOpen' | 'NotRipe' | 'NotDone' | 'CodecError' | 'DispatchError' | 'Recent' | 'NoReward';
+    readonly isTooManyClaims: boolean;
+    readonly type: 'NoSuchCase' | 'NoSuchVote' | 'NotOpen' | 'NotRipe' | 'NotDone' | 'CodecError' | 'DispatchError' | 'Recent' | 'NoReward' | 'TooManyClaims';
   }
 
   /** @name PalletProofOfInkCandidate (378) */

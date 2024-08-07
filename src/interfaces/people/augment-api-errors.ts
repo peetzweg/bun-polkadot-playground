@@ -343,6 +343,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       Recent: AugmentedError<ApiType>;
       /**
+       * Too many vote claims.
+       **/
+      TooManyClaims: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
