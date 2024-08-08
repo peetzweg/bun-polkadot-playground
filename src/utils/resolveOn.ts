@@ -3,6 +3,7 @@ import { ContractTx } from "@polkadot/api-contract/base/types";
 import { ContractOptions } from "@polkadot/api-contract/types";
 import {
   AddressOrPair,
+  SignerOptions,
   SubmittableExtrinsicFunction,
 } from "@polkadot/api/types";
 import { ISubmittableResult } from "@polkadot/types/types";
@@ -12,10 +13,15 @@ export const resolveOn =
     extrinsicFn: TExtrinsicFn,
     state: ISubmittableResult["status"]["type"]
   ) =>
-  (parameters: Parameters<TExtrinsicFn>, addressOrPair: AddressOrPair) =>
+  (
+    parameters: Parameters<TExtrinsicFn>,
+    addressOrPair: AddressOrPair,
+    options: Partial<SignerOptions> = {}
+  ) =>
     new Promise<void>((resolve, reject) => {
       extrinsicFn(...parameters).signAndSend(
         addressOrPair,
+        options,
         ({ status, dispatchError }) => {
           // console.info(status.type);
           if (dispatchError) {
@@ -24,7 +30,7 @@ export const resolveOn =
                 extrinsicFn.meta.registry.findMetaError(dispatchError.asModule);
               reject(new Error(`${section}.${method}: ${docs.join(" ")}`));
             } else {
-              console.error("Unhandled dispatchError", dispatchError);
+              console.error("Unhandled dispatchError", dispatchError.type);
               reject(dispatchError);
             }
           }

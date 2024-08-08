@@ -40,8 +40,16 @@ cli
     "--amount <amount>",
     "amount of account to advance, if not specified advances all"
   )
-  .action(async (accounts, option) => {
-    await advance(accounts as string[], Number(option.amount));
+  .option(
+    "--parallel <amount>",
+    "amount of account to advance, if not specified advances all"
+  )
+  .action(async (accounts, options) => {
+    await advance({
+      onlyAccounts: accounts ? (accounts as string[]) : [],
+      amount: options.amount ? Number(options.amount) : undefined,
+      parallel: options.parallel ? Number(options.parallel) : undefined,
+    });
   });
 
 cli

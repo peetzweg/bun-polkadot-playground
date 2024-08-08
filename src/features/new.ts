@@ -13,7 +13,7 @@ export const newAccounts = async (amount: number) => {
       const applicant = keyring.createFromUri(mnemonic);
       const ss58Address = People.createType("AccountId", applicant.address);
       console.log("new Account", ss58Address.toString());
-      Bun.write(`./accounts/${ss58Address.toHuman()}.txt`, mnemonic);
+      Bun.write(`./accounts/${ss58Address.toHuman()}`, mnemonic);
       return applicant;
     });
 

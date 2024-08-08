@@ -24,10 +24,15 @@ import initVerifiable, {
   sign,
 } from "../verifiable/verifiable";
 
-export const advance = async (
-  accounts: string[] = [],
-  advanceAmount?: number
-) => {
+interface AdvanceOptions {
+  onlyAccounts: string[];
+  amount: number;
+  parallel: number;
+}
+
+export const advance = async (options: Partial<AdvanceOptions> = {}) => {
+  const { onlyAccounts = [], amount = undefined, parallel = 1 } = options;
+
   const People = await getApi("People");
   const decimals = People.registry.chainDecimals[0];
 
@@ -40,20 +45,21 @@ export const advance = async (
     commit,
     submitEvidence,
     allocateFull,
-    transferKeepAlive,
     register,
-    setUsernameFor,
     asPersonalIdentity,
   ] = [
     People.tx.proofOfInk.apply,
     People.tx.proofOfInk.commit,
     People.tx.proofOfInk.submitEvidence,
     People.tx.proofOfInk.allocateFull,
-    People.tx.balances.transferKeepAlive,
     People.tx.proofOfInk.register,
-    People.tx.identity.setUsernameFor,
     People.tx.people.asPersonalIdentity,
   ].map((fn) => resolveOn(fn, "InBlock"));
+
+  const [transferKeepAlive, setUsernameFor] = [
+    People.tx.balances.transferKeepAlive,
+    People.tx.identity.setUsernameFor,
+  ].map((fn) => resolveOn(fn, "Finalized"));
 
   const advanceAccount = async (
     applicant: KeyringPair,
@@ -88,7 +94,8 @@ export const advance = async (
               Sr25519: applicant.sign(fullUsername),
             },
           ],
-          eve
+          eve,
+          { nonce: -1 }
         );
         return true;
       } else {
@@ -128,7 +135,6 @@ export const advance = async (
         console.log({ identity: identity.toHuman() });
         if (identity.judgements.length === 0) {
           console.log(accountId, `submitting IdentityCredential`);
-          return;
 
           const accountIdCredentials = [
             { Twitter: { username: accountId } },
@@ -165,8 +171,9 @@ export const advance = async (
     );
     if (balance.data.free.isZero()) {
       await transferKeepAlive(
-        [applicant.address, Number(0.0105) * 10 ** decimals],
-        alice
+        [applicant.address, Number(0.0205) * 10 ** decimals],
+        alice,
+        { nonce: -1 }
       );
       console.log(accountId, "funded");
       await advanceAccount(applicant, member);
@@ -260,35 +267,35 @@ export const advance = async (
     })
   );
 
-  if (accounts.length > 0) {
+  if (onlyAccounts.length > 0) {
     applicants = applicants.filter((applicant) =>
-      accounts.includes(
+      onlyAccounts.includes(
         People.createType("AccountId", applicant[0].address).toHuman()
       )
     );
+    if (applicants.length === 0) {
+      console.info("No accounts found to advance");
+    }
   }
 
   let advancedCount = 0;
-  for await (const [applicant, entropy] of applicants) {
-    try {
-      const isAdvanced = await advanceAccount(applicant, entropy);
-      if (isAdvanced) {
-        advancedCount++;
+  for (let i = 0; i < applicants.length; i += parallel) {
+    const batch = applicants.slice(i, i + parallel);
+    const results = await Promise.allSettled(
+      batch.map(async ([applicant, entropy]) => {
+        return advanceAccount(applicant, entropy);
+      })
+    );
 
-        if (advanceAmount && advancedCount >= advanceAmount) {
-          console.log(
-            `Advanced the specified amount (${advanceAmount}) of accounts`
-          );
-          return;
-        }
+    results.forEach((result) => {
+      if (result.status === "fulfilled" && result.value) {
+        advancedCount++;
+      } else if (result.status === "rejected") {
+        console.error(result.reason);
       }
-    } catch (error: unknown) {
-      console.log(applicant.address, "An Error Occurred");
-      if (error instanceof Error) {
-        console.error(applicant.address, error.message);
-      } else {
-        console.error(applicant.address, error);
-      }
+    });
+    if (amount && advancedCount >= amount) {
+      break;
     }
   }
 };
