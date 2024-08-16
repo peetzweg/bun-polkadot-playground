@@ -4,6 +4,7 @@ import { Keyring } from "@polkadot/keyring";
 import { KeyringPair } from "@polkadot/keyring/types";
 import {
   FrameSystemAccountInfo,
+  PalletIdentityPersonalIdentity,
   PalletIdentityRegistration,
   PalletProofOfInkCandidate,
 } from "@polkadot/types/lookup";
@@ -103,10 +104,9 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
       }
 
       // Link identity and personhood
-      const personIdentity = await People.query.identity.personIdentities(
-        personalId
-      );
-      if (personIdentity.isNone) {
+      const personalIdentityOption =
+        await People.query.identity.personIdentities(personalId);
+      if (personalIdentityOption.isNone) {
         console.log(
           accountId,
           `linking identity and personhood: ${personalIdOption.unwrap()}`
@@ -123,33 +123,27 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
         );
         return true;
       } else {
-        const identityOption = await People.query.identity.identityOf(
-          applicant.address
-        );
-        if (identityOption.isNone)
-          throw new Error(
-            "identityOption is none, identity should be available"
-          );
-        const identity: PalletIdentityRegistration = identityOption.unwrap()[0];
+        const personalIdentity: PalletIdentityPersonalIdentity =
+          personalIdentityOption.unwrap();
 
-        console.log({ identity: identity.toHuman() });
-        if (identity.judgements.length === 0) {
+        if (personalIdentity.pendingJudgements.length === 0) {
           console.log(accountId, `submitting IdentityCredential`);
-
-          const accountIdCredentials = [
-            { Twitter: { username: accountId } },
-            { GitHub: { username: accountId } },
-          ];
 
           const credential = People.createType(
             "FrameSupportRealityIdentitySocial",
-            pickRandomElement([PLATFORM_PROFILES, ...accountIdCredentials])
+            pickRandomElement([
+              ...PLATFORM_PROFILES,
+              // TODO Somehow crashes when using the account id here, tests for individuality repo?
+              // { Twitter: { username: accountId } },
+              // { GitHub: { username: accountId } },
+            ])
           );
 
           const submitPersonalCredentialEvidence =
             People.tx.identity.submitPersonalCredentialEvidence(credential);
           const message = submitPersonalCredentialEvidence.method.toU8a();
           const signature = sign(entropy, message);
+
           await asPersonalIdentity(
             [personalId, submitPersonalCredentialEvidence, signature],
             applicant
@@ -158,7 +152,9 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
         } else {
           console.log(
             accountId,
-            `identity judgments ${identity.judgements.join(", ")}`
+            `has pending judgments ${personalIdentity.pendingJudgements
+              .map(([, caseIndex]) => caseIndex)
+              .join(", ")}`
           );
           return false;
         }
