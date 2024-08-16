@@ -12,6 +12,7 @@ import { sudoXcm } from "./src/features/sudoxcm";
 import { advance } from "./src/features/advance";
 import { newAccounts } from "./src/features/new";
 import { hexToU8a, u8aToHex } from "@polkadot/util";
+import { intervene } from "./src/features/intervene";
 
 const cli = cac("pop");
 
@@ -66,6 +67,15 @@ cli
   )
   .action(async (call, mnemonic) => {
     await asPersonalIdentity(mnemonic.join(" "), call);
+  });
+
+cli
+  .command("intervene [...cases]", "intervene given cases")
+  .option("--truth <truth>", "Truth value to intervene with")
+  .option("--all", "Intervene all open cases")
+  .action(async (cases, options) => {
+    console.log({ cases, options });
+    await intervene(cases, options);
   });
 
 cli
