@@ -1,18 +1,19 @@
 import Keyring from "@polkadot/keyring";
+import { hexToU8a } from "@polkadot/util";
 import cac from "cac";
+import { advance } from "./src/features/advance";
 import { apply } from "./src/features/apply";
 import { asPersonalIdentity } from "./src/features/asPersonalIdentity";
-import { blake2ForFile } from "./src/features/blake2";
-import { cidForFile } from "./src/features/cid";
+import { blake2b } from "./src/features/blake2b";
+import { cid } from "./src/features/cid";
 import { cidFromBlake } from "./src/features/cidFromBlake";
+import { intervene } from "./src/features/intervene";
+import { newAccounts } from "./src/features/new";
+import { publish } from "./src/features/publish";
 import { refresh } from "./src/features/refresh";
 import { ripe } from "./src/features/ripe";
 import { storeEvidence } from "./src/features/store";
 import { sudoXcm } from "./src/features/sudoxcm";
-import { advance } from "./src/features/advance";
-import { newAccounts } from "./src/features/new";
-import { hexToU8a, u8aToHex } from "@polkadot/util";
-import { intervene } from "./src/features/intervene";
 
 const cli = cac("pop");
 
@@ -72,23 +73,30 @@ cli
 cli
   .command("intervene [...cases]", "intervene given cases")
   .option("--truth <truth>", "Truth value to intervene with")
-  .option("--all", "Intervene all open cases")
+  .option("--all", "Intervene all open cases", {})
   .action(async (cases, options) => {
     console.log({ cases, options });
     await intervene(cases, options);
   });
 
 cli
-  .command("blake2 <file_path>", "returns the blake2 hash of given file")
+  .command("publish <script>", "publish given tattoo script on testnet")
+  .option("--index <index>", "require family index", {})
+  .action(async (script, options) => {
+    await publish(script, options.index);
+  });
+
+cli
+  .command("blake2b <file_path>", "returns the blake2 hash of given file")
   .action(async (filePath) => {
-    await blake2ForFile(filePath);
+    await blake2b(filePath);
   });
 cli
   .command("cid [...files]", "returns the CID of given file")
   .option("--codec [codec]", "Codec to use in the CID, default is 'raw'")
   .action(async (files, options) => {
     for await (const file of files) {
-      await cidForFile(file, options?.codec);
+      await cid(file, options?.codec);
     }
   });
 
