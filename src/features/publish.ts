@@ -1,9 +1,9 @@
-import { prompt, PromptObject } from "prompts";
-import { basename } from "node:path";
-import { cidForFile } from "../utils/cidForFile";
-import { blake2bForFile } from "../utils/blake2bForFile";
-import { getApi } from "../apis";
 import { $ } from "bun";
+import { basename } from "node:path";
+import prompts, { prompt } from "prompts";
+import { getApi } from "../apis";
+import { blake2bForFile } from "../utils/blake2bForFile";
+import { cidForFile } from "../utils/cidForFile";
 import { sudoXcm } from "./sudoxcm";
 
 const validateName = (name: string) =>
@@ -63,7 +63,7 @@ export const publish = async (filePath: string, familyIndex?: number) => {
     "useFamilyIndex" | "name" | "description" | "kind"
   >;
   try {
-    result = [
+    result = await prompt([
       isFamilyIndexAvailable
         ? {
             type: "confirm",
@@ -107,7 +107,7 @@ export const publish = async (filePath: string, familyIndex?: number) => {
           },
         ],
       },
-    ];
+    ]);
   } catch (error) {
     console.log((error as Error).message);
     return;
