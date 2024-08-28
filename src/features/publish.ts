@@ -19,6 +19,18 @@ const validateDescription = (description: string) => {
   return true;
 };
 
+interface DesignFamilyMetadata {
+  version: 1;
+  metadata: {
+    size: "Fixed";
+    mime: "text/javascript";
+    media: string;
+    name: string;
+    description: string;
+    kind: string;
+  };
+}
+
 export const publish = async (filePath: string, familyIndex?: number) => {
   // get latest family id
   const people = await getApi("People");
@@ -47,70 +59,71 @@ export const publish = async (filePath: string, familyIndex?: number) => {
 
   const fileName = basename(filePath).split(".")[0];
 
-  const questions: PromptObject[] = [
-    isFamilyIndexAvailable
-      ? {
-          type: "confirm",
-          name: "useFamilyIndex",
-          message: `Creating new family with family index: ${requireFamilyIndex}`,
-        }
-      : {
-          type: "confirm",
-          name: "useFamilyIndex",
-          message: `Family index '${requireFamilyIndex}' already in use, overwrite?`,
-        },
-    {
-      type: "text",
-      name: "name",
-      message: "What is should be the tattoos display name?",
-      validate: validateName,
-      initial: fileName,
-    },
-    {
-      type: "text",
-      name: "description",
-      message: "Write a short description of the tattoo script",
-      // validate: validateDescription,
-    },
-    {
-      type: "select",
-      name: "kind",
-      message: "What kind of tattoo is it you want to publish?",
-      choices: [
-        {
-          title: "Procedural -  Seed is 4 Bytes of Entropy",
-          value: "Procedural",
-        },
-        {
-          title: "Procedural Account - Seed is Public Key as Bytes",
-          value: "ProceduralAccount",
-        },
-        {
-          title: "Procedural Personal -  Seed is Personal Id Number as Bytes",
-          value: "ProceduralPersonal",
-        },
-      ],
-    },
-  ];
-
-  const response = await prompt(questions);
+  let result: prompts.Answers<
+    "useFamilyIndex" | "name" | "description" | "kind"
+  >;
+  try {
+    result = [
+      isFamilyIndexAvailable
+        ? {
+            type: "confirm",
+            name: "useFamilyIndex",
+            message: `Creating new family with family index: ${requireFamilyIndex}`,
+          }
+        : {
+            type: "confirm",
+            name: "useFamilyIndex",
+            message: `Family index '${requireFamilyIndex}' already in use, overwrite?`,
+          },
+      {
+        type: "text",
+        name: "name",
+        message: "What is should be the tattoos display name?",
+        validate: validateName,
+        initial: fileName,
+      },
+      {
+        type: "text",
+        name: "description",
+        message: "Write a short description of the tattoo script",
+        // validate: validateDescription,
+      },
+      {
+        type: "select",
+        name: "kind",
+        message: "What kind of tattoo is it you want to publish?",
+        choices: [
+          {
+            title: "Procedural -  Seed is 4 Bytes of Entropy",
+            value: "Procedural",
+          },
+          {
+            title: "Procedural Account - Seed is Public Key as Bytes",
+            value: "ProceduralAccount",
+          },
+          {
+            title: "Procedural Personal -  Seed is Personal Id Number as Bytes",
+            value: "ProceduralPersonal",
+          },
+        ],
+      },
+    ];
+  } catch (error) {
+    console.log((error as Error).message);
+    return;
+  }
 
   const scriptCid = await cidForFile(filePath);
 
-  // (build the script)
-  // hash the script
-  // get CID of script / upload the script to ipfs
-  // add cid to metadata JSON File
-  // get CID of metadata / upload metadata JSON file
-  // add_design_family with just hash of CID of the metadata
-
-  const metadata = {
+  const metadata: DesignFamilyMetadata = {
     version: 1,
     metadata: {
       size: "Fixed",
       mime: "text/javascript",
       media: scriptCid,
-      ...response,
+      name: result.name,
+      description: result.description,
+      kind: result.kind,
     },
   };
 
@@ -137,21 +150,10 @@ export const publish = async (filePath: string, familyIndex?: number) => {
   );
 
   await sudoXcm(addDesignFamilyCall.method.toHex());
+
   console.log({
     metadata,
     hashOfMetadata,
     call: addDesignFamilyCall.method.toHex(),
   });
 };
-
-// Adding drawing js scripts:
-
-// ```bash
-// ipfs add --chunker size-1000000 ./*.js --raw-leaves --hash blake2b-256
-// ```
-
-// Adding metadata json files:
-
-// ```bash
-// ipfs add ./*.json --hash blake2b-256
-// ```
