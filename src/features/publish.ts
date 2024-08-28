@@ -31,11 +31,19 @@ interface DesignFamilyMetadata {
   };
 }
 
-export const publish = async (filePath: string, familyIndex?: number) => {
+interface PublishOptions {
+  index?: number;
+  description?: string;
+  name?: string;
+}
+export const publish = async (
+  filePath: string,
+  options: PublishOptions = {}
+) => {
   // get latest family id
   const people = await getApi("People");
 
-  let requireFamilyIndex = familyIndex;
+  let requireFamilyIndex = options.index;
   let isFamilyIndexAvailable = true;
   if (requireFamilyIndex) {
     const family = await people.query.proofOfInk.designFamilies(
@@ -80,12 +88,13 @@ export const publish = async (filePath: string, familyIndex?: number) => {
         name: "name",
         message: "What is should be the tattoos display name?",
         validate: validateName,
-        initial: fileName,
+        initial: options.name || fileName,
       },
       {
         type: "text",
         name: "description",
         message: "Write a short description of the tattoo script",
+        initial: options.description,
         // validate: validateDescription,
       },
       {

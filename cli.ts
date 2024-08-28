@@ -82,8 +82,10 @@ cli
 cli
   .command("publish <script>", "publish given tattoo script on testnet")
   .option("--index <index>", "require family index", {})
+  .option("--description <description>", "description of the tattoo family", {})
+  .option("--name <name>", "name of the tattoo design", {})
   .action(async (script, options) => {
-    await publish(script, options.index);
+    await publish(script, options);
   });
 
 cli
