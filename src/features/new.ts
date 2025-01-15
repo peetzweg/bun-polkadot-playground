@@ -1,20 +1,17 @@
-import { getApi } from "../apis";
+import { generateMnemonic, ss58Encode } from "@polkadot-labs/hdkd-helpers";
 
-import { Keyring } from "@polkadot/keyring";
-import { mnemonicGenerate } from "@polkadot/util-crypto";
+import { mnemonicToKeyPair } from "../keyring";
 
 export const newAccounts = async (amount: number) => {
-  const People = await getApi("People");
-  const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
-
-  const applicants = [...Array(Number(amount)).keys()]
-    .map(() => mnemonicGenerate(24))
+  [...Array(Number(amount)).keys()]
+    .map(() => generateMnemonic(24 * 8))
     .map((mnemonic) => {
-      const applicant = keyring.createFromUri(mnemonic);
-      const ss58Address = People.createType("AccountId", applicant.address);
-      console.log("new Account", ss58Address.toString());
-      Bun.write(`./accounts/${ss58Address.toHuman()}`, mnemonic);
-      return applicant;
+      const { keyPair } = mnemonicToKeyPair(mnemonic);
+
+      const ss58Address = ss58Encode(keyPair.publicKey, 0);
+
+      console.log("new Account", ss58Address);
+      Bun.write(`./accounts/${ss58Address}`, mnemonic);
     });
 
   console.info(`Created ${amount} new accounts in ./accounts`);
