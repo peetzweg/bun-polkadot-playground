@@ -7,6 +7,7 @@ import {
   PHOTO_EVIDENCE_HASHES,
   VIDEO_EVIDENCE_HASHES,
 } from "../features/evidence";
+import { log } from "./applicantLog";
 
 type MachineContext = {
   applicant: Applicant;
@@ -28,7 +29,7 @@ export const applyMachine = setup({
   },
   actions: {
     fundAction: async ({ context: { applicant, api, alice }, self }) => {
-      console.log(` ${applicant.address} funding...`);
+      log(applicant.address, "funding...");
       try {
         await signAndSubmit(
           api.tx.Balances.transfer_allow_death({
@@ -43,7 +44,7 @@ export const applyMachine = setup({
       }
     },
     applyAction: async ({ context: { applicant, api }, self }) => {
-      console.log(` ${applicant.address} applying...`);
+      log(applicant.address, "applying...");
       try {
         await signAndSubmit(api.tx.ProofOfInk.apply(), applicant.signer);
         self.send({ type: "APPLIED" });
@@ -53,7 +54,7 @@ export const applyMachine = setup({
     },
     commitAction: async ({ context: { applicant, api }, self }) => {
       try {
-        console.log(` ${applicant.address} committing...`);
+        log(applicant.address, "committing...");
 
         // TODO need to make sure index 10 is ProceduralAccount design type!!!
         const designFamilies =
@@ -79,7 +80,7 @@ export const applyMachine = setup({
       }
     },
     submitEvidenceAction: async ({ context: { applicant, api }, self }) => {
-      console.log(` ${applicant.address} submitting evidence...`);
+      log(applicant.address, "submitting evidence...");
       const candidacy = await api.query.ProofOfInk.Candidates.getValue(
         applicant.address
       );

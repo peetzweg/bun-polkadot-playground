@@ -27,7 +27,7 @@ export async function signAndSubmit<
         // console.log(e.type);
 
         if (e.type === "finalized") {
-          console.log("Block Hash", e.block.hash);
+          // console.log("Block Hash", e.block.hash);
           resolve(e);
         }
       },
