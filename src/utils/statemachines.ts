@@ -16,6 +16,7 @@ type MachineContext = {
 };
 
 type MachineEvents =
+  | { type: "APPLY_WITH_DEPOSIT" }
   | { type: "FUNDED" }
   | { type: "APPLIED" }
   | { type: "COMMITTED" }
@@ -116,13 +117,20 @@ export const applyMachine = setup({
   },
 }).createMachine({
   id: "Apply",
-  initial: "Unfunded",
+  initial: "Waiting",
   context: ({ input }) => ({
     applicant: input.applicant,
     api: input.api,
     alice: input.alice,
   }),
   states: {
+    Waiting: {
+      on: {
+        APPLY_WITH_DEPOSIT: {
+          target: "Funded",
+        },
+      },
+    },
     Unfunded: {
       entry: [{ type: "fundAction" }],
       on: {

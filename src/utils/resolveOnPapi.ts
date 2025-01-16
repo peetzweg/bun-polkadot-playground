@@ -1,4 +1,4 @@
-import { Enum, PolkadotSigner, Transaction } from "polkadot-api";
+import { Enum, PolkadotSigner, Transaction, TxFinalized } from "polkadot-api";
 
 // type PalletKey = keyof typeof People.tx;
 
@@ -14,7 +14,7 @@ export async function signAndSubmit<
   Asset,
   Args extends {} | undefined,
   T extends Transaction<Args, Pallet, Name, Asset>
->(tx: T, signer: PolkadotSigner) {
+>(tx: T, signer: PolkadotSigner): Promise<TxFinalized> {
   return new Promise((resolve, reject) => {
     tx.signSubmitAndWatch(signer, {
       customSignedExtensions: {
