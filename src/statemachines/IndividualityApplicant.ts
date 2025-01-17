@@ -1,14 +1,14 @@
-import { MultiAddress, people } from "@polkadot-api/descriptors";
+import { people } from "@polkadot-api/descriptors";
 import { Enum, FixedSizeBinary, PolkadotSigner, TypedApi } from "polkadot-api";
-import { ActionFunction, setup } from "xstate";
-import { Applicant } from "../keyring";
-import { signAndSubmit } from "./resolveOnPapi";
+import { setup } from "xstate";
 import {
   PHOTO_EVIDENCE_HASHES,
   VIDEO_EVIDENCE_HASHES,
 } from "../features/evidence";
-import { log } from "./applicantLog";
-import { pickRandomElement } from "./pickRandomElement";
+import { Applicant } from "../keyring";
+import { faucet } from "../utils/faucet";
+import { pickRandomElement } from "../utils/pickRandomElement";
+import { signAndSubmit } from "../utils/resolveOnPapi";
 
 type MachineInput = {
   applicant: Applicant;
@@ -22,20 +22,25 @@ type MachineContext = {
 };
 
 type MachineEvents =
-  | { type: "FUNDED" }
-  | { type: "NOT_PROVEN" }
-  | { type: "PROVEN" }
-  | { type: "HAS_FUNDS" }
-  | { type: "IS_APPLIED" }
-  | { type: "HAS_JUDGING" }
-  | { type: "IS_PROVEN" }
-  | { type: "HAS_NO_FUNDS" }
   | { type: "APPLIED_WITH_DEPOSIT" }
   | { type: "COMMITTED" }
+  | { type: "EVIDENCE_SUBMITTED" }
+  | { type: "FUNDED" }
   | { type: "HAS_FULL_ALLOCATION" }
+  | { type: "HAS_FUNDS" }
   | { type: "HAS_INITIAL_ALLOCATION" }
+  | { type: "HAS_INVITE_VOUCHER" }
+  | { type: "HAS_JUDGING" }
+  | { type: "HAS_NO_FUNDS" }
+  | { type: "INIT_DONE" }
+  | { type: "IS_APPLIED" }
   | { type: "IS_COMMITTED" }
-  | { type: "EVIDENCE_SUBMITTED" };
+  | { type: "IS_PROVEN" }
+  | { type: "NOT_PROVEN" }
+  | { type: "PROVEN" }
+  | { type: "WAIT" }
+  | { type: "RESTORE_STATE" }
+  | { type: "CHECK_JUDGING" };
 
 export const machine = setup({
   types: {
@@ -91,6 +96,9 @@ export const machine = setup({
         case "Full":
           self.send({ type: "HAS_FULL_ALLOCATION" });
           break;
+        case "InitDone":
+          self.send({ type: "INIT_DONE" });
+          break;
       }
     },
     submitVideoEvidence: async function ({ context, event, self }, params) {
@@ -121,35 +129,75 @@ export const machine = setup({
         console.error(e);
       }
     },
-    checkJudging: async function ({ context, event }, params) {
-      const candidacy = await context.api.query.ProofOfInk.Candidates.getValue(context.applicant.address);
+    checkJudging: async function ({ context, event, self }, params) {
+      const candidacy = await context.api.query.ProofOfInk.Candidates.getValue(
+        context.applicant.address
+      );
 
-      if(candidacy?.type === "Selected"){
-        if (candidacy.value.judging){
-          console.log("Judging", candidacy.value.judging);
-        }
-      }else{
-        console.log("In Judging State but no open Judging!!!")
+      switch (candidacy?.type) {
+        case "Proven":
+          self.send({ type: "PROVEN" });
+          break;
+        case "Selected":
+          if (candidacy.value.judging) {
+            console.log("Judging", candidacy.value.judging);
+          } else if (candidacy.value.allocation.type === "InitDone") {
+            self.send({ type: "INIT_DONE" });
+          } else {
+            console.log("Unhandled case not sure what todo");
+          }
+          break;
       }
+
+      self.send({ type: "WAIT" });
     },
-    allocateFull: function ({ context, event }, params) {
-      // Add your action code here
-      // ...
+    allocateFull: async function ({ context, event, self }, params) {
+      await signAndSubmit(
+        context.api.tx.ProofOfInk.allocate_full(),
+        context.applicant.signer
+      );
+      self.send({ type: "HAS_FULL_ALLOCATION" });
     },
     fund: async function ({ context, event, self }, params) {
-      log(context.applicant.address, "funding...");
-      try {
-        await signAndSubmit(
-          context.api.tx.Balances.transfer_allow_death({
-            dest: MultiAddress.Id(context.applicant.address),
-            value: 100_000_000_000n,
-          }),
-          context.alice
+      await faucet.fund(context.api, context.applicant.address);
+      self.send({ type: "FUNDED" });
+    },
+    restoreState: async function ({ context, event, self }, params) {
+      const candidacy = await context.api.query.ProofOfInk.Candidates.getValue(
+        context.applicant.address
+      );
+
+      // End early as we don't want to start funding here.
+      if (!candidacy) {
+        const accountData = await context.api.query.System.Account.getValue(
+          context.applicant.address
         );
-        self.send({ type: "FUNDED" });
-      } catch (e) {
-        console.error(e);
+        if (accountData?.data.free !== 0n) {
+          self.send({ type: "HAS_FUNDS" });
+        } else {
+          self.send({ type: "HAS_NO_FUNDS" });
+        }
+        return;
       }
+      switch (candidacy?.type) {
+        case "Applied":
+          self.send({ type: "IS_APPLIED" });
+          break;
+        case "Selected":
+          if (candidacy.value.judging !== undefined) {
+            self.send({ type: "HAS_JUDGING" });
+          } else {
+            self.send({ type: "IS_COMMITTED" });
+          }
+          break;
+        case "Proven":
+          self.send({ type: "IS_PROVEN" });
+          break;
+      }
+    },
+    waitForJudgement: async function ({ context, event, self }, params) {
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+      self.send({ type: "CHECK_JUDGING" });
     },
   },
 }).createMachine({
@@ -169,6 +217,16 @@ export const machine = setup({
         HAS_FUNDS: {
           target: "#IndividualityApplicant.Pristine.Funded",
         },
+        HAS_INVITE_VOUCHER: {
+          target: "#IndividualityApplicant.Pristine.Invited",
+        },
+        RESTORE_STATE: {
+          target: "UnknownState",
+        },
+      },
+    },
+    UnknownState: {
+      on: {
         IS_APPLIED: {
           target: "#IndividualityApplicant.ProofOfInk.Applied",
         },
@@ -182,6 +240,15 @@ export const machine = setup({
         IS_PROVEN: {
           target: "Proven",
         },
+        HAS_FUNDS: {
+          target: "#IndividualityApplicant.Pristine.Funded",
+        },
+        HAS_NO_FUNDS: {
+          target: "#IndividualityApplicant.Pristine.Unfunded",
+        },
+      },
+      entry: {
+        type: "restoreState",
       },
     },
     Proven: {
@@ -194,10 +261,10 @@ export const machine = setup({
           on: {
             FUNDED: {
               target: "Funded",
-              actions: {
-                type: "fund",
-              },
             },
+          },
+          entry: {
+            type: "fund",
           },
         },
         Funded: {
@@ -209,6 +276,9 @@ export const machine = setup({
           entry: {
             type: "applyWithDeposit",
           },
+        },
+        Invited: {
+          type: "final",
         },
       },
     },
@@ -236,6 +306,9 @@ export const machine = setup({
                 HAS_INITIAL_ALLOCATION: {
                   target: "InitialAllocation",
                 },
+                INIT_DONE: {
+                  target: "AllocateFull",
+                },
               },
               entry: {
                 type: "checkAllocation",
@@ -261,19 +334,6 @@ export const machine = setup({
                 type: "submitPhotoEvidence",
               },
             },
-            Judging: {
-              on: {
-                NOT_PROVEN: {
-                  target: "AllocateFull",
-                },
-                PROVEN: {
-                  target: "#IndividualityApplicant.Proven",
-                },
-              },
-              entry: {
-                type: "checkJudging",
-              },
-            },
             AllocateFull: {
               on: {
                 HAS_FULL_ALLOCATION: {
@@ -282,6 +342,32 @@ export const machine = setup({
               },
               entry: {
                 type: "allocateFull",
+              },
+            },
+            Judging: {
+              on: {
+                INIT_DONE: {
+                  target: "AllocateFull",
+                },
+                PROVEN: {
+                  target: "#IndividualityApplicant.Proven",
+                },
+                WAIT: {
+                  target: "WaitingForJudgement",
+                },
+              },
+              entry: {
+                type: "checkJudging",
+              },
+            },
+            WaitingForJudgement: {
+              on: {
+                CHECK_JUDGING: {
+                  target: "Judging",
+                },
+              },
+              entry: {
+                type: "waitForJudgement",
               },
             },
           },

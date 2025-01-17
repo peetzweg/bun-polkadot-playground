@@ -31,26 +31,26 @@ cli
     await apply(Number(amount));
   });
 
-// cli
-//   .command(
-//     "advance [...accounts]",
-//     "advance candidacy of all already created accounts"
-//   )
-//   .option(
-//     "--amount <amount>",
-//     "amount of account to advance, if not specified advances all"
-//   )
-//   .option(
-//     "--parallel <amount>",
-//     "amount of account to advance, if not specified advances all"
-//   )
-//   .action(async (accounts, options) => {
-//     await advance({
-//       onlyAccounts: accounts ? (accounts as string[]) : [],
-//       amount: options.amount ? Number(options.amount) : undefined,
-//       parallel: options.parallel ? Number(options.parallel) : undefined,
-//     });
-//   });
+cli
+  .command(
+    "advance [...accounts]",
+    "advance candidacy of all already created accounts"
+  )
+  .option(
+    "--amount <amount>",
+    "amount of account to advance, if not specified advances all"
+  )
+  .option(
+    "--parallel <amount>",
+    "amount of account to advance, if not specified advances all"
+  )
+  .action(async (accounts, options) => {
+    await advance({
+      onlyAccounts: accounts ? (accounts as string[]) : [],
+      amount: options.amount ? Number(options.amount) : undefined,
+      parallel: options.parallel ? Number(options.parallel) : undefined,
+    });
+  });
 
 // cli
 //   .command("u8a <hex>", "Convert given hex string into Uint8Array")
