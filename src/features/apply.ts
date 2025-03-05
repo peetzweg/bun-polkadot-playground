@@ -6,8 +6,9 @@ import { createActor, waitFor } from "xstate";
 import { getDevPolkadotSigner, mnemonicToApplicant } from "../keyring";
 import { log } from "../utils/applicantLog";
 import { signAndSubmit } from "../utils/resolveOnPapi";
-import { applyMachine } from "../utils/statemachines";
+import { machine } from "../statemachines/IndividualityApplicant";
 import { storeMnemonic } from "./new";
+import { stateValueToString } from "../utils/stateValueToString";
 
 export const apply = async (amount: number) => {
   const People = await getTypedApi("People");
@@ -41,7 +42,7 @@ export const apply = async (amount: number) => {
   );
 
   const actors = applicants.map((applicant) => {
-    return createActor(applyMachine, {
+    return createActor(machine, {
       input: { applicant: applicant, api: People, alice: alice.signer },
     });
   });
@@ -49,44 +50,29 @@ export const apply = async (amount: number) => {
 
   while (actors.length > 0) {
     const batch = actors.splice(0, 7);
-    console.log("Starting actors...", batch.length);
-    batch.forEach((actor) => actor.start());
 
-    console.log("Subscribing to actors...");
     const subscriptions = batch.map((actor) =>
       actor.subscribe(({ value, context, status }) => {
-        log(context.applicant.address, value);
+        log(context.applicant.address, stateValueToString(value));
       })
     );
-
-    console.log("Sending APPLY_WITH_DEPOSIT to actors...");
-    batch.forEach((actor) => actor.send({ type: "APPLY_WITH_DEPOSIT" }));
-
-    console.log("Waiting for actors to finish...");
+    batch.forEach((actor) => actor.start());
+    batch.forEach((actor) => actor.send({ type: "HAS_FUNDS" }));
 
     await Promise.all(
       batch.map((actor) =>
-        waitFor(actor, (snapshot) => snapshot.matches("Judging"))
+        waitFor(actor, (snapshot) => {
+          if (
+            stateValueToString(snapshot.value) ===
+            "ProofOfInk.Committed.Judging"
+          ) {
+            return true;
+          }
+          return false;
+        })
       )
     );
     subscriptions.forEach((subscription) => subscription.unsubscribe());
     batch.forEach((actor) => actor.stop());
   }
-
-  // for await (const applicant of applicants) {
-  //   const actor = createActor(applyMachine, {
-  //     input: { applicant: applicant, api: People, alice: alice.signer },
-  //   });
-
-  //   actor.start();
-
-  //   const subscription = actor.subscribe(({ value, context, status }) => {
-  //     log(context.applicant.address, value);
-  //   });
-
-  //   await waitFor(actor, (snapshot) => snapshot.matches("Judging"));
-
-  //   subscription.unsubscribe();
-  //   actor.stop();
-  // }
 };

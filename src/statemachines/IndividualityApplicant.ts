@@ -144,7 +144,10 @@ export const machine = setup({
           } else if (candidacy.value.allocation.type === "InitDone") {
             self.send({ type: "INIT_DONE" });
           } else {
-            console.log("Unhandled case not sure what todo");
+            console.log(
+              context.applicant.address,
+              "Unhandled case not sure what todo"
+            );
           }
           break;
       }

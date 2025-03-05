@@ -87,11 +87,13 @@ cli
 //     await publish(script, options);
 //   });
 
-// cli
-//   .command("blake2b <file_path>", "returns the blake2 hash of given file")
-//   .action(async (filePath) => {
-//     await blake2b(filePath);
-//   });
+cli
+  .command("blake2b [...files]", "returns the blake2 hash of given file")
+  .action(async (files) => {
+    for await (const file of files) {
+      await blake2b(file);
+    }
+  });
 // cli
 //   .command("cid [...files]", "returns the CID of given file")
 //   .option("--codec [codec]", "Codec to use in the CID, default is 'raw'")
@@ -101,11 +103,11 @@ cli
 //     }
 //   });
 
-// cli
-//   .command("cidFromBlake <hash>", "returns the CID of given blake2 hash")
-//   .action(async (hash) => {
-//     await cidFromBlake(hash);
-//   });
+cli
+  .command("cidFromBlake <hash>", "returns the CID of given blake2 hash")
+  .action(async (hash) => {
+    await cidFromBlake(hash);
+  });
 
 // cli
 //   .command(
