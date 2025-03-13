@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 
 import { Actor, createActor, toPromise, waitFor } from "xstate";
-import { getTypedApi } from "../apis";
+import { getTypedApi, getTypedApiBulletin } from "../apis";
 import { getDevPolkadotSigner, mnemonicToApplicant } from "../keyring";
 import { machine } from "../statemachines/IndividualityApplicant";
 import initVerifiable from "../verifiable/verifiable";
@@ -17,7 +17,8 @@ interface AdvanceOptions {
 export const advance = async (options: Partial<AdvanceOptions> = {}) => {
   const { onlyAccounts = [], amount = undefined, parallel = 1 } = options;
 
-  const People = await getTypedApi("People");
+  const People = await getTypedApi();
+  const Bulletin = await getTypedApiBulletin();
 
   const alice = getDevPolkadotSigner("//Alice");
   const eve = getDevPolkadotSigner("//Eve");
@@ -45,7 +46,12 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
   }
   const actors = applicants.map((applicant) => {
     return createActor(machine, {
-      input: { applicant: applicant, api: People, alice: alice.signer },
+      input: {
+        applicant: applicant,
+        api: People,
+        bulletin: Bulletin,
+        alice: alice.signer,
+      },
     });
   });
   console.log("Actors created", actors.length);

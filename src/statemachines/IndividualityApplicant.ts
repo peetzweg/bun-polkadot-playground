@@ -1,23 +1,31 @@
-import { people } from "@polkadot-api/descriptors";
-import { Enum, FixedSizeBinary, PolkadotSigner, TypedApi } from "polkadot-api";
-import { setup } from "xstate";
+import { bulletin, people } from "@polkadot-api/descriptors";
+import { blake2AsHex } from "@polkadot/util-crypto";
+import { join } from "node:path";
 import {
-  PHOTO_EVIDENCE_HASHES,
-  VIDEO_EVIDENCE_HASHES,
-} from "../features/evidence";
+  Binary,
+  Enum,
+  FixedSizeBinary,
+  PolkadotSigner,
+  TypedApi,
+} from "polkadot-api";
+import { setup } from "xstate";
 import { Applicant } from "../keyring";
 import { faucet } from "../utils/faucet";
+import { listFiles } from "../utils/listFiles";
 import { pickRandomElement } from "../utils/pickRandomElement";
+import { prepareEvidence } from "../utils/prepareEvidence";
 import { signAndSubmit } from "../utils/resolveOnPapi";
 
 type MachineInput = {
   applicant: Applicant;
   api: TypedApi<typeof people>;
+  bulletin: TypedApi<typeof bulletin>;
   alice: PolkadotSigner;
 };
 type MachineContext = {
   applicant: Applicant;
   api: TypedApi<typeof people>;
+  bulletin: TypedApi<typeof bulletin>;
   alice: PolkadotSigner;
 };
 
@@ -102,31 +110,109 @@ export const machine = setup({
       }
     },
     submitVideoEvidence: async function ({ context, event, self }, params) {
-      const evidenceHash = pickRandomElement(VIDEO_EVIDENCE_HASHES);
       try {
+        const folder = Bun.env.VIDEO_EVIDENCE_FOLDER;
+        if (!folder) {
+          throw new Error("VIDEO_EVIDENCE_FOLDER environment variable not set");
+        }
+
+        const files = await listFiles(folder, ".mp4");
+
+        if (files.length === 0) {
+          throw new Error("No MP4 files found in VIDEO_EVIDENCE_FOLDER");
+        }
+
+        // Pick a random MP4 file
+        const randomFile = pickRandomElement(files);
+        const filePath = join(folder, randomFile);
+
+        // Prepare the evidence
+        const [instructions, chunks] = await prepareEvidence(filePath);
+
+        let chunksStored = 0;
+        for await (const chunk of chunks) {
+          const encodedChunk = Binary.fromBytes(chunk);
+          console.info("Storing chunk...");
+          const store = context.bulletin.tx.TransactionStorage.store({
+            data: encodedChunk,
+          });
+          await signAndSubmit(store, context.applicant.signer);
+          chunksStored++;
+          console.log(`chunksStored: ${chunksStored}/${chunks.length}`);
+        }
+
+        const instructionBytes = Binary.fromText(JSON.stringify(instructions));
+        console.log("Storing Instructions...");
+        const storeInstructions = context.bulletin.tx.TransactionStorage.store({
+          data: instructionBytes,
+        });
+        await signAndSubmit(storeInstructions, context.applicant.signer);
+        console.log("Instructions stored!");
+        const instructionsHash = blake2AsHex(instructionBytes.asBytes());
+        console.log("instructionsHash", instructionsHash);
         await signAndSubmit(
           context.api.tx.ProofOfInk.submit_evidence({
-            evidence: FixedSizeBinary.fromHex(evidenceHash),
+            evidence: FixedSizeBinary.fromHex(instructionsHash),
           }),
           context.applicant.signer
         );
         self.send({ type: "EVIDENCE_SUBMITTED" });
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
     submitPhotoEvidence: async function ({ context, event, self }, params) {
-      const evidenceHash = pickRandomElement(PHOTO_EVIDENCE_HASHES);
       try {
+        const folder = Bun.env.PHOTO_EVIDENCE_FOLDER;
+        if (!folder) {
+          throw new Error("PHOTO_EVIDENCE_FOLDER environment variable not set");
+        }
+
+        const files = await listFiles(folder, ".jpg");
+
+        if (files.length === 0) {
+          throw new Error("No JPG files found in PHOTO_EVIDENCE_FOLDER");
+        }
+
+        // Pick a random MP4 file
+        const randomFile = pickRandomElement(files);
+        const filePath = join(folder, randomFile);
+
+        // Prepare the evidence
+        const [instructions, chunks] = await prepareEvidence(filePath);
+
+        let chunksStored = 0;
+        for await (const chunk of chunks) {
+          const encodedChunk = Binary.fromBytes(chunk);
+          console.info("Storing chunk...");
+          const store = context.bulletin.tx.TransactionStorage.store({
+            data: encodedChunk,
+          });
+          await signAndSubmit(store, context.applicant.signer);
+          chunksStored++;
+          console.log(`chunksStored: ${chunksStored}/${chunks.length}`);
+        }
+
+        const instructionBytes = Binary.fromText(JSON.stringify(instructions));
+        console.log("Storing Instructions...");
+        const storeInstructions = context.bulletin.tx.TransactionStorage.store({
+          data: instructionBytes,
+        });
+        await signAndSubmit(storeInstructions, context.applicant.signer);
+        console.log("Instructions stored!");
+        const instructionsHash = blake2AsHex(instructionBytes.asBytes());
+        console.log("instructionsHash", instructionsHash);
         await signAndSubmit(
           context.api.tx.ProofOfInk.submit_evidence({
-            evidence: FixedSizeBinary.fromHex(evidenceHash),
+            evidence: FixedSizeBinary.fromHex(instructionsHash),
           }),
           context.applicant.signer
         );
         self.send({ type: "EVIDENCE_SUBMITTED" });
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
     checkJudging: async function ({ context, event, self }, params) {
@@ -207,6 +293,7 @@ export const machine = setup({
   context: ({ input }) => ({
     applicant: input.applicant,
     api: input.api,
+    bulletin: input.bulletin,
     alice: input.alice,
   }),
   id: "IndividualityApplicant",
