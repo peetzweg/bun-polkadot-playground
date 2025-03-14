@@ -2,10 +2,12 @@ import { bulletin, people } from "@polkadot-api/descriptors";
 import { blake2AsHex } from "@polkadot/util-crypto";
 import { join } from "node:path";
 import {
+  AccountId,
   Binary,
   Enum,
   FixedSizeBinary,
   PolkadotSigner,
+  SS58String,
   TypedApi,
 } from "polkadot-api";
 import { setup } from "xstate";
@@ -21,12 +23,14 @@ type MachineInput = {
   api: TypedApi<typeof people>;
   bulletin: TypedApi<typeof bulletin>;
   alice: PolkadotSigner;
+  log: (...args: Parameters<typeof console.log>) => void;
 };
 type MachineContext = {
   applicant: Applicant;
   api: TypedApi<typeof people>;
   bulletin: TypedApi<typeof bulletin>;
   alice: PolkadotSigner;
+  log: (...args: Parameters<typeof console.log>) => void;
 };
 
 type MachineEvents =
@@ -48,7 +52,9 @@ type MachineEvents =
   | { type: "PROVEN" }
   | { type: "WAIT" }
   | { type: "RESTORE_STATE" }
-  | { type: "CHECK_JUDGING" };
+  | { type: "CHECK_JUDGING" }
+  | { type: "HAS_NO_ALLOCATION" }
+  | { type: "HAS_TOO_LITTLE_ALLOCATION" };
 
 export const machine = setup({
   types: {
@@ -97,11 +103,30 @@ export const machine = setup({
         );
       }
 
+      const authorizations =
+        await context.bulletin.query.TransactionStorage.Authorizations.getValue(
+          {
+            type: "Account",
+            value: context.applicant.address,
+          }
+        );
+
       switch (candidacy.value.allocation.type) {
         case "Initial":
+          if (!authorizations) {
+            self.send({ type: "HAS_NO_ALLOCATION" });
+            return;
+          }
           self.send({ type: "HAS_INITIAL_ALLOCATION" });
           break;
         case "Full":
+          if (!authorizations) {
+            self.send({ type: "HAS_NO_ALLOCATION" });
+            return;
+          } else if (authorizations.extent.bytes < 2_100_000n) {
+            self.send({ type: "HAS_TOO_LITTLE_ALLOCATION" });
+            return;
+          }
           self.send({ type: "HAS_FULL_ALLOCATION" });
           break;
         case "InitDone":
@@ -132,24 +157,23 @@ export const machine = setup({
         let chunksStored = 0;
         for await (const chunk of chunks) {
           const encodedChunk = Binary.fromBytes(chunk);
-          console.info("Storing chunk...");
           const store = context.bulletin.tx.TransactionStorage.store({
             data: encodedChunk,
           });
           await signAndSubmit(store, context.applicant.signer);
           chunksStored++;
-          console.log(`chunksStored: ${chunksStored}/${chunks.length}`);
+          context.log(`chunksStored: ${chunksStored}/${chunks.length}`);
         }
 
         const instructionBytes = Binary.fromText(JSON.stringify(instructions));
-        console.log("Storing Instructions...");
+        context.log("Storing Instructions...");
         const storeInstructions = context.bulletin.tx.TransactionStorage.store({
           data: instructionBytes,
         });
         await signAndSubmit(storeInstructions, context.applicant.signer);
-        console.log("Instructions stored!");
+        context.log("Instructions stored!");
         const instructionsHash = blake2AsHex(instructionBytes.asBytes());
-        console.log("instructionsHash", instructionsHash);
+        context.log("instructionsHash", instructionsHash);
         await signAndSubmit(
           context.api.tx.ProofOfInk.submit_evidence({
             evidence: FixedSizeBinary.fromHex(instructionsHash),
@@ -185,24 +209,24 @@ export const machine = setup({
         let chunksStored = 0;
         for await (const chunk of chunks) {
           const encodedChunk = Binary.fromBytes(chunk);
-          console.info("Storing chunk...");
+          context.log("Storing chunk...");
           const store = context.bulletin.tx.TransactionStorage.store({
             data: encodedChunk,
           });
           await signAndSubmit(store, context.applicant.signer);
           chunksStored++;
-          console.log(`chunksStored: ${chunksStored}/${chunks.length}`);
+          context.log(`chunksStored: ${chunksStored}/${chunks.length}`);
         }
 
         const instructionBytes = Binary.fromText(JSON.stringify(instructions));
-        console.log("Storing Instructions...");
+        context.log("Storing Instructions...");
         const storeInstructions = context.bulletin.tx.TransactionStorage.store({
           data: instructionBytes,
         });
         await signAndSubmit(storeInstructions, context.applicant.signer);
-        console.log("Instructions stored!");
+        context.log("Instructions stored!");
         const instructionsHash = blake2AsHex(instructionBytes.asBytes());
-        console.log("instructionsHash", instructionsHash);
+        context.log("instructionsHash", instructionsHash);
         await signAndSubmit(
           context.api.tx.ProofOfInk.submit_evidence({
             evidence: FixedSizeBinary.fromHex(instructionsHash),
@@ -226,18 +250,22 @@ export const machine = setup({
           break;
         case "Selected":
           if (candidacy.value.judging) {
-            console.log("Judging", candidacy.value.judging);
+            context.log("Judging", candidacy.value.judging);
+            self.send({ type: "HAS_JUDGING" });
           } else if (candidacy.value.allocation.type === "InitDone") {
             self.send({ type: "INIT_DONE" });
           } else {
-            console.log(
+            context.log(
               context.applicant.address,
               "Unhandled case not sure what todo"
             );
+            // Complete here as we need external intervention
+            return;
           }
           break;
       }
 
+      // Only send WAIT if we haven't returned early due to needing intervention
       self.send({ type: "WAIT" });
     },
     allocateFull: async function ({ context, event, self }, params) {
@@ -295,6 +323,7 @@ export const machine = setup({
     api: input.api,
     bulletin: input.bulletin,
     alice: input.alice,
+    log: input.log,
   }),
   id: "IndividualityApplicant",
   initial: "Waiting",
@@ -342,6 +371,9 @@ export const machine = setup({
       },
     },
     Proven: {
+      type: "final",
+    },
+    Blocked: {
       type: "final",
     },
     Pristine: {
@@ -399,6 +431,12 @@ export const machine = setup({
                 INIT_DONE: {
                   target: "AllocateFull",
                 },
+                HAS_NO_ALLOCATION: {
+                  target: "#IndividualityApplicant.Blocked",
+                },
+                HAS_TOO_LITTLE_ALLOCATION: {
+                  target: "#IndividualityApplicant.Blocked",
+                },
               },
               entry: {
                 type: "checkAllocation",
@@ -427,7 +465,7 @@ export const machine = setup({
             AllocateFull: {
               on: {
                 HAS_FULL_ALLOCATION: {
-                  target: "FullAllocation",
+                  target: "UnknownAllocation",
                 },
               },
               entry: {
@@ -441,6 +479,9 @@ export const machine = setup({
                 },
                 PROVEN: {
                   target: "#IndividualityApplicant.Proven",
+                },
+                HAS_JUDGING: {
+                  target: "#IndividualityApplicant.Blocked",
                 },
                 WAIT: {
                   target: "WaitingForJudgement",

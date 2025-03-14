@@ -2,7 +2,11 @@ import { readdir } from "node:fs/promises";
 
 import { Actor, createActor, toPromise, waitFor } from "xstate";
 import { getTypedApi, getTypedApiBulletin } from "../apis";
-import { getDevPolkadotSigner, mnemonicToApplicant } from "../keyring";
+import {
+  getDevPolkadotSigner,
+  mnemonicToApplicant,
+  Applicant,
+} from "../keyring";
 import { machine } from "../statemachines/IndividualityApplicant";
 import initVerifiable from "../verifiable/verifiable";
 import { stateValueToString } from "../utils/stateValueToString";
@@ -14,12 +18,87 @@ interface AdvanceOptions {
   parallel: number;
 }
 
+class WorkerPool {
+  private activeWorkers: Map<string, Actor<typeof machine>> = new Map();
+  private pendingApplicants: Applicant[] = [];
+  private readonly maxWorkers: number;
+  private readonly apis: {
+    people: Awaited<ReturnType<typeof getTypedApi>>;
+    bulletin: Awaited<ReturnType<typeof getTypedApiBulletin>>;
+    alice: ReturnType<typeof getDevPolkadotSigner>;
+  };
+
+  constructor(
+    maxWorkers: number,
+    apis: {
+      people: Awaited<ReturnType<typeof getTypedApi>>;
+      bulletin: Awaited<ReturnType<typeof getTypedApiBulletin>>;
+      alice: ReturnType<typeof getDevPolkadotSigner>;
+    }
+  ) {
+    this.maxWorkers = maxWorkers;
+    this.apis = apis;
+  }
+
+  addApplicants(applicants: Applicant[]) {
+    this.pendingApplicants.push(...applicants);
+    this.tryStartNewWorkers();
+  }
+
+  private createWorker(applicant: Applicant) {
+    const actor = createActor(machine, {
+      input: {
+        applicant,
+        api: this.apis.people,
+        bulletin: this.apis.bulletin,
+        alice: this.apis.alice.signer,
+        log: (...args: Parameters<typeof console.log>) =>
+          log(applicant.address, "[INFO]", ...args),
+      },
+    });
+
+    const subscription = actor.subscribe(({ value, context, status }) => {
+      log(context.applicant.address, stateValueToString(value));
+    });
+
+    actor.start();
+    actor.send({ type: "RESTORE_STATE" });
+
+    this.activeWorkers.set(applicant.address, actor);
+
+    // Handle worker completion
+    toPromise(actor).then(() => {
+      subscription.unsubscribe();
+      this.activeWorkers.delete(applicant.address);
+      this.tryStartNewWorkers();
+    });
+  }
+
+  private tryStartNewWorkers() {
+    while (
+      this.activeWorkers.size < this.maxWorkers &&
+      this.pendingApplicants.length > 0
+    ) {
+      const applicant = this.pendingApplicants.shift()!;
+      this.createWorker(applicant);
+    }
+  }
+
+  async waitForCompletion() {
+    if (this.activeWorkers.size === 0 && this.pendingApplicants.length === 0) {
+      return;
+    }
+
+    await Promise.all(Array.from(this.activeWorkers.values()).map(toPromise));
+    await this.waitForCompletion(); // Recursively wait for any new workers that might have started
+  }
+}
+
 export const advance = async (options: Partial<AdvanceOptions> = {}) => {
-  const { onlyAccounts = [], amount = undefined, parallel = 1 } = options;
+  const { onlyAccounts = [], parallel = 7 } = options;
 
   const People = await getTypedApi();
   const Bulletin = await getTypedApiBulletin();
-
   const alice = getDevPolkadotSigner("//Alice");
   const eve = getDevPolkadotSigner("//Eve");
 
@@ -34,43 +113,23 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
     })
   );
 
-  console.log({ onlyAccounts });
   if (onlyAccounts.length > 0) {
     applicants = applicants.filter((applicant) =>
       onlyAccounts.includes(applicant.address)
     );
   }
+
   if (applicants.length === 0) {
     console.info("No accounts found to advance");
     return;
   }
-  const actors = applicants.map((applicant) => {
-    return createActor(machine, {
-      input: {
-        applicant: applicant,
-        api: People,
-        bulletin: Bulletin,
-        alice: alice.signer,
-      },
-    });
+
+  const workerPool = new WorkerPool(parallel, {
+    people: People,
+    bulletin: Bulletin,
+    alice,
   });
-  console.log("Actors created", actors.length);
 
-  while (actors.length > 0) {
-    const batch = actors.splice(0, 7);
-
-    const subscriptions = batch.map((actor) =>
-      actor.subscribe(({ value, context, status }) => {
-        log(context.applicant.address, stateValueToString(value));
-      })
-    );
-
-    batch.forEach((actor) => actor.start());
-    batch.forEach((actor) => actor.send({ type: "RESTORE_STATE" }));
-
-    await Promise.all(batch.map((actor) => toPromise(actor)));
-
-    subscriptions.forEach((subscription) => subscription.unsubscribe());
-    // batch.forEach((actor) => actor.stop());
-  }
+  workerPool.addApplicants(applicants);
+  await workerPool.waitForCompletion();
 };
