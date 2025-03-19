@@ -1,95 +1,78 @@
-import { getApi } from "../apis";
+import { getTypedApi } from "../apis";
 
-import { Keyring } from "@polkadot/keyring";
-import { KeyringPair } from "@polkadot/keyring/types";
-import { mnemonicGenerate } from "@polkadot/util-crypto";
-import { resolveOnInBlock } from "../utils/resolveOn";
-import { resolveOnSome } from "../utils/resolveOnSome";
-import { PalletProofOfInkCandidate } from "@polkadot/types/lookup";
-import { PHOTO_EVIDENCE_HASHES, VIDEO_EVIDENCE_HASHES } from "./evidence";
+import { MultiAddress } from "@polkadot-api/descriptors";
+import { generateMnemonic } from "@polkadot-labs/hdkd-helpers";
+import { createActor, waitFor } from "xstate";
+import { getDevPolkadotSigner, mnemonicToApplicant } from "../keyring";
+import { log } from "../utils/applicantLog";
+import { signAndSubmit } from "../utils/resolveOnPapi";
+import { machine } from "../statemachines/IndividualityApplicant";
+import { storeMnemonic } from "./new";
+import { stateValueToString } from "../utils/stateValueToString";
 
 export const apply = async (amount: number) => {
-  const People = await getApi("People");
+  const People = await getTypedApi("People");
 
-  const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
-  const alice = keyring.createFromUri("//Alice");
+  const alice = getDevPolkadotSigner("//Alice");
 
-  const decimals = People.registry.chainDecimals[0];
+  const mnemonics = [...Array(Number(amount)).keys()].map(
+    () => generateMnemonic(24 * 8) // 24 words
+  );
 
-  const [apply, commit, submitEvidence] = [
-    People.tx.proofOfInk.apply,
-    People.tx.proofOfInk.commit,
-    People.tx.proofOfInk.submitEvidence,
-  ].map((fn) => resolveOnInBlock(fn));
+  const applicants = mnemonics
+    .map((m) => storeMnemonic(m))
+    .map((m) => mnemonicToApplicant(m));
 
-  const graduateAccount = async (applicant: KeyringPair) => {
-    await apply([], applicant);
-    console.log(applicant.address, "applied");
+  const fundingTransfers = applicants.map((applicant) =>
+    People.tx.Balances.transfer_allow_death({
+      dest: MultiAddress.Id(applicant.address),
+      value: 100_000_000_000n,
+    })
+  );
 
-    await commit([{ ProceduralAccount: 8 }, null], applicant);
-    console.log(applicant.address, "committed");
+  const finalizedEvent = await signAndSubmit(
+    People.tx.Utility.batch_all({
+      calls: fundingTransfers.map((t) => t.decodedCall),
+    }),
+    alice.signer
+  );
+  console.log(
+    "Funding transfers completed, starting actors...",
+    finalizedEvent.block.hash
+  );
 
-    const candidacyOption = await People.query.proofOfInk.candidates(
-      applicant.address
-    );
-    if (candidacyOption.isNone)
-      throw new Error(`No candidacy found for '${applicant.address}'`);
-
-    const candidacy: PalletProofOfInkCandidate = candidacyOption.unwrap();
-    if (!candidacy.isSelected)
-      throw new Error(`Candidacy for '${applicant.address}' is not selected`);
-
-    console.log(candidacy.asSelected.toHuman());
-
-    if (candidacy.asSelected.allocation.isInitial) {
-      const randomIndex = Math.floor(
-        Math.random() * PHOTO_EVIDENCE_HASHES.length
-      );
-      const randomHash = PHOTO_EVIDENCE_HASHES[randomIndex];
-      await submitEvidence([randomHash], applicant);
-      console.log(applicant.address, "photo evidence provided");
-    } else if (candidacy.asSelected.allocation.isFull) {
-      const randomIndex = Math.floor(
-        Math.random() * VIDEO_EVIDENCE_HASHES.length
-      );
-      const randomHash = VIDEO_EVIDENCE_HASHES[randomIndex];
-      await submitEvidence([randomHash], applicant);
-      console.log(applicant.address, "video evidence provided");
-    }
-  };
-
-  const prepareAccounts = (mnemonics: string[]) => {
-    return mnemonics.map((mnemonic) => {
-      const applicant = keyring.createFromUri(mnemonic);
-      const ss58Address = People.createType("AccountId", applicant.address);
-      console.log("new Account", ss58Address.toString());
-      Bun.write(`./accounts/${ss58Address.toHuman()}`, mnemonic);
-      return applicant;
+  const actors = applicants.map((applicant) => {
+    return createActor(machine, {
+      input: { applicant: applicant, api: People, alice: alice.signer },
     });
-  };
+  });
+  console.log("Actors created", actors.length);
 
-  const fundAccounts = async (addresses: string[]) => {
-    const fundCalls = addresses.map((address) =>
-      People.tx.balances.transferKeepAlive(
-        address,
-        Number(0.0105) * 10 ** decimals
+  while (actors.length > 0) {
+    const batch = actors.splice(0, 7);
+
+    const subscriptions = batch.map((actor) =>
+      actor.subscribe(({ value, context, status }) => {
+        log(context.applicant.address, stateValueToString(value));
+      })
+    );
+    batch.forEach((actor) => actor.start());
+    batch.forEach((actor) => actor.send({ type: "HAS_FUNDS" }));
+
+    await Promise.all(
+      batch.map((actor) =>
+        waitFor(actor, (snapshot) => {
+          if (
+            stateValueToString(snapshot.value) ===
+            "ProofOfInk.Committed.Judging"
+          ) {
+            return true;
+          }
+          return false;
+        })
       )
     );
-
-    return resolveOnInBlock(People.tx.utility.batch)([fundCalls], alice);
-  };
-
-  const mnemonics = [...Array(Number(amount)).keys()].map(() =>
-    mnemonicGenerate(24)
-  );
-  const applicants = prepareAccounts(mnemonics);
-
-  await fundAccounts(applicants.map((a) => a.address));
-  console.log("All accounts funded");
-
-  for await (const applicant of applicants) {
-    await graduateAccount(applicant);
+    subscriptions.forEach((subscription) => subscription.unsubscribe());
+    batch.forEach((actor) => actor.stop());
   }
-
-  console.log("All accounts opened a mob rule case");
 };

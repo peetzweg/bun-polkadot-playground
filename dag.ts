@@ -15,7 +15,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { u8aToHex } from "@polkadot/util";
 import { blake2AsU8a } from "@polkadot/util-crypto";
 import { api as Bulletin } from "./src/apis/bulletin";
-import { resolveOnInBlock } from "./src/utils/resolveOn";
+import { resolveOn } from "./src/utils/resolveOn";
 
 import { MemoryBlockstore } from "blockstore-core/memory";
 import { importer } from "ipfs-unixfs-importer";
@@ -26,7 +26,7 @@ const CHUNK_SIZE = 1024 * 1024 * 3;
 
 export const storeEvidence = async (filePath: string, account: KeyringPair) => {
   console.info("Using chunk size of", CHUNK_SIZE / 1e6, "MB");
-  const store = resolveOnInBlock(Bulletin.tx.transactionStorage.store);
+  const store = resolveOn(Bulletin.tx.transactionStorage.store);
 
   const file = Bun.file(filePath);
   const buffer = await file.arrayBuffer();

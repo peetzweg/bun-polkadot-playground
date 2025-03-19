@@ -1,21 +1,22 @@
-import { getApi } from "../apis";
+import { generateMnemonic } from "@polkadot-labs/hdkd-helpers";
 
-import { Keyring } from "@polkadot/keyring";
-import { mnemonicGenerate } from "@polkadot/util-crypto";
+import { AccountId } from "polkadot-api";
+import { mnemonicToKeyPair } from "../keyring";
+
+export const storeMnemonic = (mnemonic: string) => {
+  const { keyPair } = mnemonicToKeyPair(mnemonic);
+
+  const ss58Address = AccountId(42, 32).dec(keyPair.publicKey);
+
+  console.log("new Account", ss58Address);
+  Bun.write(`./accounts/${ss58Address}`, mnemonic);
+  return mnemonic;
+};
 
 export const newAccounts = async (amount: number) => {
-  const People = await getApi("People");
-  const keyring = new Keyring({ type: "sr25519", ss58Format: 0 });
-
-  const applicants = [...Array(Number(amount)).keys()]
-    .map(() => mnemonicGenerate(24))
-    .map((mnemonic) => {
-      const applicant = keyring.createFromUri(mnemonic);
-      const ss58Address = People.createType("AccountId", applicant.address);
-      console.log("new Account", ss58Address.toString());
-      Bun.write(`./accounts/${ss58Address.toHuman()}`, mnemonic);
-      return applicant;
-    });
+  [...Array(Number(amount)).keys()]
+    .map(() => generateMnemonic(24 * 8))
+    .map((mnemonic) => storeMnemonic(mnemonic));
 
   console.info(`Created ${amount} new accounts in ./accounts`);
 };
