@@ -6,15 +6,15 @@
     "build": "bun build ./cli.ts --compile --outfile ./dist/cli",
     "cli": "bun run cli.ts",
     "codegen": "papi",
-    "metadata:people": "source .env && papi add -w \"wss://$PEOPLE_RPC\" people",
-    "metadata:bulletin": "source .env && papi add -w \"wss://$BULLETIN_RPC\" bulletin",
-    "metadata": "bun metadata:people && bun metadata:bulletin"
+    "metadata:people": "source .env && bunx papi add -w \"wss://$PEOPLE_RPC\" people",
+    "metadata:bulletin": "source .env && bunx papi add -w \"wss://$BULLETIN_RPC\" bulletin",
+    "metadata": "bun metadata:people && bun metadata:bulletin && bun metadata:people-unstable"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "@helia/strings": "^2.0.1",
@@ -24,19 +24,18 @@
     "@polkadot-api/descriptors": "file:.papi/descriptors",
     "@polkadot-labs/hdkd": "^0.0.10",
     "@polkadot-labs/hdkd-helpers": "^0.0.10",
-    "@polkadot/util-crypto": "^13.3.1",
+    "@polkadot/util-crypto": "^13.4.3",
     "@types/prompts": "^2.4.9",
     "blockstore-core": "^4.4.1",
     "cac": "^6.7.14",
     "cids": "^1.1.9",
     "helia": "^4.2.6",
-    "ipfs-unixfs-importer": "^15.3.1",
-    "multiformats": "^13.3.1",
+    "ipfs-unixfs-importer": "^15.3.2",
+    "multiformats": "^13.3.2",
     "multihashes": "^4.0.3",
-    "polkadot-api": "^1.8.2",
+    "polkadot-api": "^1.9.5",
     "prompts": "^2.4.2",
     "ts-node": "^10.9.2",
     "xstate": "^5.19.2"
-  },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  }
 }
