@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 
 import { Actor, createActor, toPromise, waitFor } from "xstate";
-import { getTypedApi, getTypedApiBulletin } from "../apis";
+import { getPeopleApi, getBulletinApi } from "../apis";
 import {
   getDevPolkadotSigner,
   mnemonicToApplicant,
@@ -23,16 +23,16 @@ class WorkerPool {
   private pendingApplicants: Applicant[] = [];
   private readonly maxWorkers: number;
   private readonly apis: {
-    people: Awaited<ReturnType<typeof getTypedApi>>;
-    bulletin: Awaited<ReturnType<typeof getTypedApiBulletin>>;
+    people: Awaited<ReturnType<typeof getPeopleApi>>;
+    bulletin: Awaited<ReturnType<typeof getBulletinApi>>;
     alice: ReturnType<typeof getDevPolkadotSigner>;
   };
 
   constructor(
     maxWorkers: number,
     apis: {
-      people: Awaited<ReturnType<typeof getTypedApi>>;
-      bulletin: Awaited<ReturnType<typeof getTypedApiBulletin>>;
+      people: Awaited<ReturnType<typeof getPeopleApi>>;
+      bulletin: Awaited<ReturnType<typeof getBulletinApi>>;
       alice: ReturnType<typeof getDevPolkadotSigner>;
     }
   ) {
@@ -97,14 +97,14 @@ class WorkerPool {
 export const advance = async (options: Partial<AdvanceOptions> = {}) => {
   const { onlyAccounts = [], parallel = 7 } = options;
 
-  const People = await getTypedApi();
-  const Bulletin = await getTypedApiBulletin();
+  const People = await getPeopleApi();
+  const Bulletin = await getBulletinApi();
   const alice = getDevPolkadotSigner("//Alice");
-  const eve = getDevPolkadotSigner("//Eve");
 
   await initVerifiable();
 
-  const files = await readdir("./accounts");
+  const files = (await readdir("./accounts")).sort();
+  console.log({ files });
   let applicants = await Promise.all(
     files.map(async (filename) => {
       const file = Bun.file(`./accounts/${filename}`);
@@ -132,4 +132,5 @@ export const advance = async (options: Partial<AdvanceOptions> = {}) => {
 
   workerPool.addApplicants(applicants);
   await workerPool.waitForCompletion();
+  console.log("All workers completed");
 };

@@ -28,7 +28,7 @@ export const getDevPolkadotSigner = (path: string) => {
 export const mnemonicToKeyPair = (mnemonic: string) => {
   const entropy = entropyToMiniSecret(mnemonicToEntropy(mnemonic));
   const derive = sr25519CreateDerive(entropy);
-  const keyPair = derive("//Alice");
+  const keyPair = derive("//");
   const signer = getPolkadotSigner(keyPair.publicKey, "Sr25519", keyPair.sign);
   return { keyPair, signer };
 };
@@ -38,15 +38,31 @@ export interface Applicant {
   signer: PolkadotSigner;
   address: SS58String;
   multiAddress: MultiAddress;
+  mnemonic: string;
+  entropy: Uint8Array;
+  entropy_person: Uint8Array;
+  entropy_voucher: Uint8Array;
 }
 export const mnemonicToApplicant = (mnemonic: string): Applicant => {
   const entropy = entropyToMiniSecret(mnemonicToEntropy(mnemonic));
+  const entropy_person = entropyToMiniSecret(mnemonicToEntropy(mnemonic));
+  const entropy_voucher = entropyToMiniSecret(mnemonicToEntropy(mnemonic));
   const derive = sr25519CreateDerive(entropy);
-  const keyPair = derive("//Alice");
+  const keyPair = derive("");
+
   const signer = getPolkadotSigner(keyPair.publicKey, "Sr25519", keyPair.sign);
   const address = AccountId(42, 32).dec(keyPair.publicKey);
   const multiAddress = MultiAddress.Address32(
     new FixedSizeBinary(keyPair.publicKey)
   );
-  return { keyPair, signer, address, multiAddress };
+  return {
+    keyPair,
+    signer,
+    address,
+    multiAddress,
+    mnemonic,
+    entropy,
+    entropy_voucher,
+    entropy_person,
+  };
 };

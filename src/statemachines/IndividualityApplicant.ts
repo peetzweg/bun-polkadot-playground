@@ -1,5 +1,5 @@
 import { bulletin, people } from "@polkadot-api/descriptors";
-import { blake2AsHex } from "@polkadot/util-crypto";
+import { blake2AsHex, mnemonicToEntropy } from "@polkadot/util-crypto";
 import { join } from "node:path";
 import {
   AccountId,
@@ -17,6 +17,7 @@ import { listFiles } from "../utils/listFiles";
 import { pickRandomElement } from "../utils/pickRandomElement";
 import { prepareEvidence } from "../utils/prepareEvidence";
 import { signAndSubmit } from "../utils/resolveOnPapi";
+import { member_from_entropy, one_shot } from "../verifiable/verifiable";
 
 type MachineInput = {
   applicant: Applicant;
@@ -54,7 +55,9 @@ type MachineEvents =
   | { type: "RESTORE_STATE" }
   | { type: "CHECK_JUDGING" }
   | { type: "HAS_NO_ALLOCATION" }
-  | { type: "HAS_TOO_LITTLE_ALLOCATION" };
+  | { type: "HAS_TOO_LITTLE_ALLOCATION" }
+  | { type: "REGISTERED_PERSON" }
+  | { type: "REGISTERED_ALIAS" };
 
 export const machine = setup({
   types: {
@@ -280,6 +283,36 @@ export const machine = setup({
       self.send({ type: "FUNDED" });
     },
     restoreState: async function ({ context, event, self }, params) {
+      const member_key = member_from_entropy(context.applicant.entropy_person);
+
+      const member_key_fixed_binary = FixedSizeBinary.fromBytes(member_key);
+
+      const personalId = await context.api.query.People.Keys.getValue(
+        member_key_fixed_binary
+      );
+      if (personalId) {
+        context.log("Registered Person: ", personalId);
+        const myInfo = await context.api.query.People.People.getValue(
+          personalId
+        );
+        if (!myInfo) {
+          throw new Error(
+            "People.People(${personalId}) not found, something is wrong in the pallet. NOT IN RING YET?"
+          );
+        }
+        const ringIndex = myInfo.ring_index;
+
+        const ring = await context.api.query.People.RingKeys.getValue(
+          ringIndex
+        );
+        // ring.keys;
+
+        // const alias = ();
+
+        self.send({ type: "REGISTERED_PERSON" });
+        return;
+      }
+
       const candidacy = await context.api.query.ProofOfInk.Candidates.getValue(
         context.applicant.address
       );
@@ -296,6 +329,7 @@ export const machine = setup({
         }
         return;
       }
+
       switch (candidacy?.type) {
         case "Applied":
           self.send({ type: "IS_APPLIED" });
@@ -315,6 +349,65 @@ export const machine = setup({
     waitForJudgement: async function ({ context, event, self }, params) {
       await new Promise((resolve) => setTimeout(resolve, 30000));
       self.send({ type: "CHECK_JUDGING" });
+    },
+    registerMemberKey: async function ({ context, event, self }, params) {
+      const pub_key = member_from_entropy(context.applicant.entropy);
+      const voucher_pub_key = member_from_entropy(
+        context.applicant.entropy_voucher
+      );
+      const self_ref_voucher_pub_key = member_from_entropy(
+        context.applicant.entropy_voucher
+      );
+
+      context.log("registering Person key");
+
+      const registerTx = context.api.tx.ProofOfInk.register_non_referred({
+        key: FixedSizeBinary.fromBytes(pub_key),
+        voucher_key: FixedSizeBinary.fromBytes(voucher_pub_key),
+        self_ref_voucher_key: FixedSizeBinary.fromBytes(
+          self_ref_voucher_pub_key
+        ),
+      });
+
+      await signAndSubmit(registerTx, context.applicant.signer);
+      self.send({ type: "REGISTERED_PERSON" });
+    },
+    registerAliasAccount: async function ({ context, event, self }, params) {
+      context.log("Want to register Alias Account");
+      const member_key = member_from_entropy(context.applicant.entropy_person);
+
+      const member_key_fixed_binary = FixedSizeBinary.fromBytes(member_key);
+
+      const personalId = await context.api.query.People.Keys.getValue(
+        member_key_fixed_binary
+      );
+      if (personalId) {
+        context.log("Registered Person: ", personalId);
+        const myInfo = await context.api.query.People.People.getValue(
+          personalId
+        );
+        if (!myInfo) {
+          throw new Error(
+            "People.People(${personalId}) not found, something is wrong in the pallet. NOT IN RING YET?"
+          );
+        }
+        const ringIndex = myInfo.ring_index;
+
+        const ring = await context.api.query.People.RingKeys.getValue(
+          ringIndex
+        );
+        const members = ring.keys;
+        const proofContext = new Uint8Array([1, 2, 3, 4]);
+        const message = new Uint8Array([1, 2, 3, 4]);
+        const result = one_shot(
+          context.applicant.entropy_person,
+          members,
+          proofContext,
+          message
+        );
+
+        return;
+      }
     },
   },
 }).createMachine({
@@ -357,7 +450,7 @@ export const machine = setup({
           target: "#IndividualityApplicant.ProofOfInk.Committed.Judging",
         },
         IS_PROVEN: {
-          target: "Proven",
+          target: "#IndividualityApplicant.Person.Proven",
         },
         HAS_FUNDS: {
           target: "#IndividualityApplicant.Pristine.Funded",
@@ -365,13 +458,16 @@ export const machine = setup({
         HAS_NO_FUNDS: {
           target: "#IndividualityApplicant.Pristine.Unfunded",
         },
+        REGISTERED_PERSON: {
+          target: "#IndividualityApplicant.Person.NoAlias",
+        },
+        REGISTERED_ALIAS: {
+          target: "#IndividualityApplicant.Person.WithAlias",
+        },
       },
       entry: {
         type: "restoreState",
       },
-    },
-    Proven: {
-      type: "final",
     },
     Blocked: {
       type: "final",
@@ -478,7 +574,7 @@ export const machine = setup({
                   target: "AllocateFull",
                 },
                 PROVEN: {
-                  target: "#IndividualityApplicant.Proven",
+                  target: "#IndividualityApplicant.Person.Proven",
                 },
                 HAS_JUDGING: {
                   target: "#IndividualityApplicant.Blocked",
@@ -501,6 +597,34 @@ export const machine = setup({
                 type: "waitForJudgement",
               },
             },
+          },
+        },
+      },
+    },
+    Person: {
+      initial: "Proven",
+      states: {
+        WithAlias: {
+          type: "final",
+        },
+        NoAlias: {
+          on: {
+            REGISTERED_ALIAS: {
+              target: "#IndividualityApplicant.Person.WithAlias",
+            },
+          },
+          entry: {
+            type: "registerAliasAccount",
+          },
+        },
+        Proven: {
+          on: {
+            REGISTERED_PERSON: {
+              target: "#IndividualityApplicant.Person.NoAlias",
+            },
+          },
+          entry: {
+            type: "registerMemberKey",
           },
         },
       },

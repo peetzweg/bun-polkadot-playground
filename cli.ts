@@ -12,8 +12,15 @@ import { refresh } from "./src/features/refresh";
 import { ripe } from "./src/features/ripe";
 import { storeEvidence } from "./src/features/store";
 import { sudoXcm } from "./src/features/sudoxcm";
+import { newGame } from "./src/features/newgame";
 
 const cli = cac("pop");
+
+cli
+  .command("newgame", "create new DIM2 game")
+  .action(async (amount, options) => {
+    await newGame();
+  });
 
 cli
   .command("new <amount>", "create new accounts")

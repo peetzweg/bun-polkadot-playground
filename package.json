@@ -6,9 +6,13 @@
     "build": "bun build ./cli.ts --compile --outfile ./dist/cli",
     "cli": "bun run cli.ts",
     "codegen": "papi",
+    "metadata:relay": "source .env && bunx papi add -w \"wss://$RELAY_RPC\" relay",
     "metadata:people": "source .env && bunx papi add -w \"wss://$PEOPLE_RPC\" people",
     "metadata:bulletin": "source .env && bunx papi add -w \"wss://$BULLETIN_RPC\" bulletin",
-    "metadata": "bun metadata:people && bun metadata:bulletin && bun metadata:people-unstable"
+    "metadata:relay_unstable": "source .env && bunx papi add -w \"wss://$RELAY_UNSTABLE_RPC\" relay_unstable",
+    "metadata:people_unstable": "source .env && bunx papi add -w \"wss://$PEOPLE_UNSTABLE_RPC\" people_unstable",
+    "metadata:bulletin_unstable": "source .env && bunx papi add -w \"wss://$BULLETIN_UNSTABLE_RPC\" bulletin_unstable",
+    "metadata": "bun metadata:people && bun metadata:bulletin && bun metadata:people-unstable && bun metadata:bulletin_unstable"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -1,4 +1,4 @@
-import { getTypedApi } from "../apis";
+import { getBulletinApi, getPeopleApi } from "../apis";
 
 import { MultiAddress } from "@polkadot-api/descriptors";
 import { generateMnemonic } from "@polkadot-labs/hdkd-helpers";
@@ -11,7 +11,8 @@ import { storeMnemonic } from "./new";
 import { stateValueToString } from "../utils/stateValueToString";
 
 export const apply = async (amount: number) => {
-  const People = await getTypedApi("People");
+  const People = await getPeopleApi();
+  const Bulletin = await getBulletinApi();
 
   const alice = getDevPolkadotSigner("//Alice");
 
@@ -43,7 +44,13 @@ export const apply = async (amount: number) => {
 
   const actors = applicants.map((applicant) => {
     return createActor(machine, {
-      input: { applicant: applicant, api: People, alice: alice.signer },
+      input: {
+        applicant: applicant,
+        api: People,
+        alice: alice.signer,
+        bulletin: Bulletin,
+        log: console.log,
+      },
     });
   });
   console.log("Actors created", actors.length);
